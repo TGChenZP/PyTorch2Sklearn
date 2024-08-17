@@ -74,7 +74,7 @@ class Transformer(TorchToSklearn_Model):
 
             # MLP layer for final output
             # just take the 0th vector of the last layer (cls) in transformer_output
-            if self.CFG.use_cls:
+            if self.CFG['use_cls']:
                 self.out_mlp = LinearLayer(
                     self.CFG, self.CFG['hidden_dim'], self.CFG['output_dim'])
             else:  # concatenate the output from all layers in transformer_output
