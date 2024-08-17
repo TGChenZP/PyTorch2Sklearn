@@ -1,5 +1,5 @@
-from __template__ import TorchToSklearn_Model
-from Modules import *
+from PyTorch2Sklearn.__template__ import TorchToSklearn_Model
+from PyTorch2Sklearn.Modules import *
 
 
 class Transformer(TorchToSklearn_Model):

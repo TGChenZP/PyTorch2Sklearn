@@ -1,5 +1,5 @@
-from environment import *
-from utils import *
+from PyTorch2Sklearn.environment import *
+from PyTorch2Sklearn.utils import *
 
 
 class TorchToSklearn_Model(object):

@@ -1,4 +1,4 @@
-from environment import *
+from PyTorch2Sklearn.environment import *
 
 
 class TabularDataset(Dataset):
