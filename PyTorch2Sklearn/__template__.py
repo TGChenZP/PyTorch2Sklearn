@@ -94,6 +94,10 @@ class TorchToSklearn_Model(object):
             for batch in tabular_dataloader:
                 X, y = batch[0].to(self.device), batch[1].to(self.device)
 
+                # special case error handling: batchnorm needs more than 2 instances to be meaningful
+                if self.CFG['batchnorm'] == True and X.shape[0] <= 2:
+                    continue
+
                 if self.CFG['mode'] == 'Regression':
                     y = y.view(-1, 1)
 
