@@ -74,6 +74,7 @@ class MLP(TorchToSklearn_Model):
                  random_state=42,
                  grad_clip=False,
                  batchnorm=False,
+                 verbose=False,
                  rootpath='./',
                  name="MLP"):
 
@@ -93,6 +94,7 @@ class MLP(TorchToSklearn_Model):
             'loss': loss,
             'TabularDataFactory': TabularDataFactory,
             'TabularDataset': TabularDataset,
+            'verbose': verbose,
             'rootpath': rootpath,
             'name': name
         }

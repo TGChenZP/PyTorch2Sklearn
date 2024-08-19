@@ -84,31 +84,59 @@ class TorchToSklearn_Model(object):
         torch.manual_seed(self.CFG['random_state'])
         seeds = [np.random.randint(1, 1000) for _ in range(self.CFG['epochs'])]
 
-        for epoch in tqdm(range(self.CFG['epochs'])):
+        if self.CFG['verbose'] == True:
+            for epoch in tqdm(range(self.CFG['epochs'])):
 
-            tabular_dataloader = DataLoader(tabular_dataset,
-                                            batch_size=self.CFG['batch_size'],
-                                            shuffle=True,
-                                            generator=torch.Generator().manual_seed(seeds[epoch]))
+                tabular_dataloader = DataLoader(tabular_dataset,
+                                                batch_size=self.CFG['batch_size'],
+                                                shuffle=True,
+                                                generator=torch.Generator().manual_seed(seeds[epoch]))
 
-            for batch in tabular_dataloader:
-                X, y = batch[0].to(self.device), batch[1].to(self.device)
+                for batch in tabular_dataloader:
+                    X, y = batch[0].to(self.device), batch[1].to(self.device)
 
-                # special case error handling: batchnorm needs more than 2 instances to be meaningful
-                if self.CFG['batchnorm'] == True and X.shape[0] <= 2:
-                    continue
+                    # special case error handling: batchnorm needs more than 2 instances to be meaningful
+                    if self.CFG['batchnorm'] == True and X.shape[0] <= 2:
+                        continue
 
-                if self.CFG['mode'] == 'Regression':
-                    y = y.view(-1, 1)
+                    if self.CFG['mode'] == 'Regression':
+                        y = y.view(-1, 1)
 
-                self.optimizer.zero_grad()
-                pred = self.model(X)
+                    self.optimizer.zero_grad()
+                    pred = self.model(X)
 
-                loss = self.criterion(pred, y)
-                loss.backward()
-                if self.CFG['grad_clip']:
-                    nn.utils.clip_grad_norm_(self.model.parameters(), 2.0)
-                self.optimizer.step()
+                    loss = self.criterion(pred, y)
+                    loss.backward()
+                    if self.CFG['grad_clip']:
+                        nn.utils.clip_grad_norm_(self.model.parameters(), 2.0)
+                    self.optimizer.step()
+
+        else:
+            for epoch in range(self.CFG['epochs']):
+
+                tabular_dataloader = DataLoader(tabular_dataset,
+                                                batch_size=self.CFG['batch_size'],
+                                                shuffle=True,
+                                                generator=torch.Generator().manual_seed(seeds[epoch]))
+
+                for batch in tabular_dataloader:
+                    X, y = batch[0].to(self.device), batch[1].to(self.device)
+
+                    # special case error handling: batchnorm needs more than 2 instances to be meaningful
+                    if self.CFG['batchnorm'] == True and X.shape[0] <= 2:
+                        continue
+
+                    if self.CFG['mode'] == 'Regression':
+                        y = y.view(-1, 1)
+
+                    self.optimizer.zero_grad()
+                    pred = self.model(X)
+
+                    loss = self.criterion(pred, y)
+                    loss.backward()
+                    if self.CFG['grad_clip']:
+                        nn.utils.clip_grad_norm_(self.model.parameters(), 2.0)
+                    self.optimizer.step()
 
         self._is_fitted = True
 
