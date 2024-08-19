@@ -84,7 +84,7 @@ class TorchToSklearn_Model(object):
         torch.manual_seed(self.CFG['random_state'])
         seeds = [np.random.randint(1, 1000) for _ in range(self.CFG['epochs'])]
 
-        for epoch in range(self.CFG['epochs']):
+        for epoch in tqdm(range(self.CFG['epochs'])):
 
             tabular_dataloader = DataLoader(tabular_dataset,
                                             batch_size=self.CFG['batch_size'],

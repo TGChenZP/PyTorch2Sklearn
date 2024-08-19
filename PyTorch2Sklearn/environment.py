@@ -11,3 +11,4 @@ from torch.optim import AdamW
 import os
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
+from tqdm import tqdm
