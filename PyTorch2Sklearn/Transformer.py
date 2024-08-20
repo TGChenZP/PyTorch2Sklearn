@@ -33,7 +33,7 @@ class Transformer(TorchToSklearn_Model):
 
         def forward(self, X):
 
-            if self.CFG["shared_embedding_mlp"]:
+            if self.CFG["share_embedding_mlp"]:
                 # Apply the shared MLP layer to each feature separately
                 mlp_output = torch.stack(
                     [self.shared_mlp(X[:, i : i + 1]) for i in range(X.size(1))], dim=1
