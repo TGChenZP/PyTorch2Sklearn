@@ -100,7 +100,7 @@ class TorchToSklearn_Model(object):
                         continue
 
                     if self.CFG['mode'] == 'Regression':
-                        y = y.view(-1, 1)
+                        y = y.view(-1, self.CFG['output_dim'])
 
                     self.optimizer.zero_grad()
                     pred = self.model(X)
@@ -127,7 +127,7 @@ class TorchToSklearn_Model(object):
                         continue
 
                     if self.CFG['mode'] == 'Regression':
-                        y = y.view(-1, 1)
+                        y = y.view(-1, self.CFG['output_dim'])
 
                     self.optimizer.zero_grad()
                     pred = self.model(X)
@@ -191,6 +191,7 @@ class TorchToSklearn_Model(object):
         """
 
         assert self._is_fitted, 'model has not been fitted yet'
+        assert self.CFG['mode'] == 'Classification', 'predict_proba is only available for classification tasks'
         self.model.eval()
 
         with torch.no_grad():

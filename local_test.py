@@ -44,6 +44,13 @@ def test_functions():
         X_reg, columns=[f'feature_{i+1}' for i in range(X_reg.shape[1])])
     y_reg_series = pd.Series(y_reg, name='target')
 
+    # Create a regression dataset
+    X_reg2, y_reg2 = make_regression(
+        n_samples=100, n_features=5, noise=0.1, random_state=42, n_targets=2)
+    X_reg2_df = pd.DataFrame(
+        X_reg2, columns=[f'feature_{i+1}' for i in range(X_reg.shape[1])])
+    y_reg2_series = pd.DataFrame(y_reg2)
+
     # Create a classification dataset with 2 classes
     X_class_2, y_class_2 = make_classification(
         n_samples=100, n_features=5, n_classes=2, n_clusters_per_class=1, random_state=42)
@@ -62,6 +69,10 @@ def test_functions():
         test_mlp(X_reg_df, y_reg_series, mode='Regression', output_dim=1)
         test_transformer(X_reg_df, y_reg_series,
                          mode='Regression', output_dim=1)
+
+        test_mlp(X_reg2_df, y_reg2_series, mode='Regression', output_dim=2)
+        test_transformer(X_reg2_df, y_reg2_series,
+                         mode='Regression', output_dim=2)
 
         test_mlp(X_class_2_df, y_class_2_series,
                  mode='Classification', output_dim=2)
@@ -120,7 +131,7 @@ def test_mlp(X, y, mode, output_dim):
         print(r2_score(y, model.predict(X)))
     else:
         print(accuracy_score(y, model.predict(X)))
-    print("===Evaluate MLP Complete===")
+    print(f"===Evaluate MLP {mode} {output_dim} class/dim test Complete===")
     print()
 
 
@@ -171,7 +182,8 @@ def test_transformer(X, y, mode, output_dim):
         print(r2_score(y, model.predict(X)))
     else:
         print(accuracy_score(y, model.predict(X)))
-    print("===Evaluate Transformer Complete===")
+    print(
+        f"===Evaluate Transformer {mode} {output_dim} class/dim test Complete===")
     print()
 
 
