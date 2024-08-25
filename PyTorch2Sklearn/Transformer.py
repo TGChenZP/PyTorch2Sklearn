@@ -25,7 +25,8 @@ class Transformer(TorchToSklearn_Model):
                     [
                         nn.Sequential(
                             LinearLayer(CFG, 1, hidden_dim, dropout),
-                            nn.BatchNorm1d(hidden_dim) if batchnorm else nn.Identity(),
+                            nn.BatchNorm1d(
+                                hidden_dim) if batchnorm else nn.Identity(),
                         )
                         for _ in range(CFG["input_dim"])
                     ]
@@ -36,12 +37,12 @@ class Transformer(TorchToSklearn_Model):
             if self.CFG["share_embedding_mlp"]:
                 # Apply the shared MLP layer to each feature separately
                 mlp_output = torch.stack(
-                    [self.shared_mlp(X[:, i : i + 1]) for i in range(X.size(1))], dim=1
+                    [self.shared_mlp(X[:, i: i + 1]) for i in range(X.size(1))], dim=1
                 )
             else:
                 # Apply the MLP layer to each feature separately
                 mlp_output = torch.stack(
-                    [self.mlp[i](X[:, i : i + 1]) for i in range(X.size(1))], dim=1
+                    [self.mlp[i](X[:, i: i + 1]) for i in range(X.size(1))], dim=1
                 )
             return mlp_output
 
@@ -120,7 +121,8 @@ class Transformer(TorchToSklearn_Model):
                 )
 
             # Last layer
-            mlp_layers.append(LinearLayer(CFG, CFG["hidden_dim"], CFG["output_dim"]))
+            mlp_layers.append(LinearLayer(
+                CFG, CFG["hidden_dim"], CFG["output_dim"]))
 
             # Combine the layers into one sequential model
             self.out_mlp = nn.Sequential(*mlp_layers)
@@ -166,7 +168,8 @@ class Transformer(TorchToSklearn_Model):
                 # Add an extra hidden_dim vector (cls) to the front of mlp_output
                 mlp_output = torch.cat(
                     [
-                        torch.zeros(X.size(0), 1, self.CFG["hidden_dim"]).to(X.device),
+                        torch.zeros(X.size(0), 1, self.CFG["hidden_dim"]).to(
+                            X.device),
                         mlp_output,
                     ],
                     dim=1,
