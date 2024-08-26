@@ -59,24 +59,24 @@ class MLP(TorchToSklearn_Model):
             return y
 
     def __init__(self,
-                 input_dim,
-                 output_dim,
-                 hidden_layers,
-                 hidden_dim,
-                 dropout,
-                 mode,
-                 batch_size,
-                 epochs,
+                 input_dim: int,
+                 output_dim: int,
+                 hidden_layers: int,
+                 hidden_dim: int,
+                 dropout: float,
+                 mode: str,
+                 batch_size: int,
+                 epochs: int,
                  loss,
                  TabularDataFactory,
                  TabularDataset,
-                 lr=1e-3,
-                 random_state=42,
-                 grad_clip=False,
-                 batchnorm=False,
-                 verbose=False,
-                 rootpath='./',
-                 name="MLP"):
+                 lr: float = 1e-3,
+                 random_state: int = 42,
+                 grad_clip: bool = False,
+                 batchnorm: bool = False,
+                 verbose: bool = False,
+                 rootpath: str = './',
+                 name: str = "MLP"):
         """ Initialize the MLP model """
 
         self.CFG = {

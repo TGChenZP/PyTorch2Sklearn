@@ -1,5 +1,6 @@
 from PyTorch2Sklearn.environment import *
 from PyTorch2Sklearn.utils import *
+from PyTorch2Sklearn.environment import *
 
 
 class TorchToSklearn_Model(object):
@@ -41,21 +42,21 @@ class TorchToSklearn_Model(object):
     def __str__(self):
         return self.name
 
-    def save(self, mark=''):
+    def save(self, mark: str = ''):
         """ Save the model """
 
         mark = ' ' + mark if mark else mark
         torch.save(self.model.state_dict(), os.path.join(
             self.CFG['rootpath'], f'state/{self}{mark}.pt'))
 
-    def load(self, mark=''):
+    def load(self, mark: str = ''):
         """ Load the model """
 
         mark = ' ' + mark if mark else mark
         self.model.load_state_dict(torch.load(os.path.join(
             self.CFG['rootpath'], f'state/{self}{mark}.pt'), map_location=self.device))
 
-    def fit(self, train_x, train_y):
+    def fit(self, train_x: pd.DataFrame, train_y: pd.Series):
         """ Fit the model 
 
             Input: 
@@ -140,7 +141,7 @@ class TorchToSklearn_Model(object):
 
         self._is_fitted = True
 
-    def predict(self, val_x):
+    def predict(self, val_x: pd.DataFrame) -> list:
         """ Predict labels for classification tasks and values for regression tasks. 
 
             Input:
@@ -181,7 +182,7 @@ class TorchToSklearn_Model(object):
 
         return valid_pred
 
-    def predict_proba(self, val_x):
+    def predict_proba(self, val_x: pd.DataFrame) -> np.ndarray:
         """ Predict probabilities for classification tasks. 
 
             Input:
