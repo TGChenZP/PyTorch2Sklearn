@@ -201,6 +201,7 @@ class Transformer(TorchToSklearn_Model):
                 )
 
     def __init__(
+
         self,
         input_dim,
         output_dim,
@@ -226,6 +227,7 @@ class Transformer(TorchToSklearn_Model):
         rootpath="./",
         name="Transformer",
     ):
+        """ Initialize the Transformer model """
 
         dim_feedforward = 4 * hidden_dim if dim_feedforward is None else dim_feedforward
 

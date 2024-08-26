@@ -77,6 +77,7 @@ class MLP(TorchToSklearn_Model):
                  verbose=False,
                  rootpath='./',
                  name="MLP"):
+        """ Initialize the MLP model """
 
         self.CFG = {
             'input_dim': input_dim,
