@@ -10,9 +10,9 @@ Author GitHub: https://github.com/TGChenZP
 1. [Introduction](#introduction)
 2. [Installation](#installation)
 3. [Model Architectures](#model-architectures)
-   - [PyTorch2Sklearn.MLP](#pytorch2sklearnmlp)
-   - [PyTorch2Sklearn.Transformer](#pytorch2sklearntransformer)
-4. [Methods](#methods)
+   - [PyTorch2Sklearn.MLP](#pytorch2sklearnmlp-source)
+   - [PyTorch2Sklearn.Transformer](#pytorch2sklearntransformer-source)
+4. [Methods](#methods-source)
 5. [Usage Examples](#usage-examples)
    - [Regression Example](#regression-example)
         - [MLP Regression Example](#mlp-regression-example)
@@ -41,25 +41,28 @@ pip install PyTorch2Sklearn
 class PyTorch2Sklearn.MLP.MLP(input_dim, output_dim, hidden_layers, hidden_dim, dropout, mode, batch_size, epochs, loss, TabularDataFactory, TabularDataset, lr=1e-3, random_state=42, grad_clip=False, batch_norm=False, verbose=False, rootpath='./', name='MLP', **kwargs)
 ```
 
-Parameters
-- input_dim (int): The number of features in the input dataset.
-- output_dim (int): The number of output classes/regression output dimension.
-- hidden_layers (int): The number of hidden layers in the MLP.
-- hidden_dim (int): The number of neurons in each hidden layer.
-- dropout (float): The dropout rate.
-- mode (str): The mode of the model, either 'Regression' or 'Classification'.
-- batch_size (int): The batch size.
-- epochs (int): The number of epochs.
-- lr (float): The learning rate.
-- random_state (int): The random state. (WARNING: complete reproducibility cannot be guarenteed even if set seed)
-- grad_clip (bool, optional(default=False)): Whether to use gradient clipping (to 2) to restrict gradients on each parameter.
-- batch_norm (bool, optional(default=False)): Whether to use batch normalization on each batch of data.
-- loss (nn.LossFunctions): The loss function.
-- TabularDataFactory (PyTorch2Sklearn.utils.data.TabularDataFactory): The tabular data factory that transforms data from input format into correct format for TabularDataset.
-- TabularDataset (PyTorch2Sklearn.utils.data.TabularDataset): The dataset object that generates batches for stochastic gradient descent.
-- verbose (bool, optional(default=False)): Whether to print the training progress.
-- rootpath (str), optional(default='./'): The root path for saving the model.
-- name (str, optional(default="MLP")): The name of the model.
+### Parameters
+| **Parameter & Type**                              | **Description**                                                                                                                                                        |
+|---------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `input_dim` (`int`)                               | The number of features in the input dataset.                                                                                                                           |
+| `output_dim` (`int`)                              | The number of output classes/regression output dimension.                                                                                                              |
+| `hidden_layers` (`int`)                           | The number of hidden layers in the MLP.                                                                                                                                |
+| `hidden_dim` (`int`)                              | The number of neurons in each hidden layer.                                                                                                                            |
+| `dropout` (`float`)                               | The dropout rate.                                                                                                                                                      |
+| `mode` (`str`)                                    | The mode of the model, either 'Regression' or 'Classification'.                                                                                                        |
+| `batch_size` (`int`)                              | The batch size.                                                                                                                                                        |
+| `epochs` (`int`)                                  | The number of epochs.                                                                                                                                                  |
+| `lr` (`float`)                                    | The learning rate.                                                                                                                                                     |
+| `random_state` (`int`)                            | The random state. *(WARNING: complete reproducibility cannot be guaranteed even if set seed)*                                                                          |
+| `grad_clip` (`bool`, optional, default=`False`)   | Whether to use gradient clipping (to 2) to restrict gradients on each parameter.                                                                                       |
+| `batch_norm` (`bool`, optional, default=`False`)  | Whether to use batch normalization on each batch of data.                                                                                                              |
+| `loss` (`nn.LossFunctions`)                       | The loss function.                                                                                                                                                     |
+| `TabularDataFactory` (`PyTorch2Sklearn.utils.data.TabularDataFactory`) | The tabular data factory that transforms data from input format into the correct format for TabularDataset.                                                            |
+| `TabularDataset` (`PyTorch2Sklearn.utils.data.TabularDataset`)         | The dataset object that generates batches for stochastic gradient descent.                                                                                             |
+| `verbose` (`bool`, optional, default=`False`)     | Whether to print the training progress.                                                                                                                                |
+| `rootpath` (`str`, optional, default=`./`)        | The root path for saving the model.                                                                                                                                    |
+| `name` (`str`, optional, default=`"MLP"`)         | The name of the model.                                                                                                                                                 |
+
 
 
 ## PyTorch2Sklearn.Transformer [[source]](https://github.com/TGChenZP/PyTorch2Sklearn/blob/main/PyTorch2Sklearn/Transformer.py)
@@ -68,30 +71,33 @@ Parameters
 class PyTorch2Sklearn.Transformer.Transformer(input_dim, output_dim, num_transformer_layers, num_mlp_layers, hidden_dim, dropout, nhead, mode, batch_size, epochs, loss, TabularDataFactory, TabularDataset, share_embedding_mlp=False, use_cls=False, dim_feedforward=None, lr=1e-3, random_state=42, grad_clip=False, batchnorm=False, verbose=False, rootpath='./', name='Transformer', **kwargs)
 ```
 
-Parameters
-- input_dim (int): The number of features in the input dataset.
-- output_dim (int): The number of output classes/regression output dimension.
-- num_transformer_layers (int): The number of transformer layers.
-- num_mlp_layers (int): The number of MLP layers.
-- hidden_dim (int): The number of neurons in the hidden layers.
-- dropout (float): The dropout rate.
-- nhead (int): The number of heads in the multiheadattention models.
-- mode (str): The mode of the model, either 'Regression' or 'Classification'.
-- batch_size (int): The batch size.
-- epochs (int): The number of epochs.
-- lr (float): The learning rate.
-- random_state (int): The random state. (WARNING: complete reproducibility cannot be guarenteed even if set seed)
-- grad_clip (bool, optional(default=False)): Whether to use gradient clipping (to 2) to restrict gradients on each parameter.
-- batch_norm (bool, optional(default=False)): Whether to use batch normalization on each batch of data
-- loss (nn.LossFunctions): The loss function.
-- TabularDataFactory (PyTorch2Sklearn.utils.data.TabularDataFactory): The tabular data factory that transforms data from input format into correct format for TabularDataset.
-- TabularDataset (PyTorch2Sklearn.utils.data.TabularDataset): The dataset object that generates batches for stochastic gradient descent.
-- share_embedding_mlp (bool, optional(default=False)): Whether to share the embedding layer in the MLP.
-- use_cls (bool, optional(default=False)): Whether to use the CLS token to feed into decoder, or concatenate all vectors outputted in the final transformer layer.
-- dim_feedforward (int, optional(default=None)): The hidden dimension in the feedforward network.
-- verbose (bool, optional(default=False)): Whether to print the training progress.
-- rootpath (str), optional(default='./'): The root path for saving the model.
-- name (str, optional(default="Transformer")): The name of the model.
+### Parameters
+| **Parameter**                              | **Description**                                                                                                                                                        |
+|---------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `input_dim` (`int`)                               | The number of features in the input dataset.                                                                                                                           |
+| `output_dim` (`int`)                              | The number of output classes/regression output dimension.                                                                                                              |
+| `num_transformer_layers` (`int`)                  | The number of transformer layers.                                                                                                                                      |
+| `num_mlp_layers` (`int`)                          | The number of MLP layers.                                                                                                                                              |
+| `hidden_dim` (`int`)                              | The number of neurons in the hidden layers.                                                                                                                            |
+| `dropout` (`float`)                               | The dropout rate.                                                                                                                                                      |
+| `nhead` (`int`)                                   | The number of heads in the multiheadattention models.                                                                                                                  |
+| `mode` (`str`)                                    | The mode of the model, either 'Regression' or 'Classification'.                                                                                                        |
+| `batch_size` (`int`)                              | The batch size.                                                                                                                                                        |
+| `epochs` (`int`)                                  | The number of epochs.                                                                                                                                                  |
+| `lr` (`float`)                                    | The learning rate.                                                                                                                                                     |
+| `random_state` (`int`)                            | The random state. *(WARNING: complete reproducibility cannot be guaranteed even if set seed)*                                                                          |
+| `grad_clip` (`bool`, optional, default=`False`)   | Whether to use gradient clipping (to 2) to restrict gradients on each parameter.                                                                                       |
+| `batch_norm` (`bool`, optional, default=`False`)  | Whether to use batch normalization on each batch of data.                                                                                                              |
+| `loss` (`nn.LossFunctions`)                       | The loss function.                                                                                                                                                     |
+| `TabularDataFactory` (`PyTorch2Sklearn.utils.data.TabularDataFactory`) | The tabular data factory that transforms data from input format into the correct format for TabularDataset.                                                            |
+| `TabularDataset` (`PyTorch2Sklearn.utils.data.TabularDataset`)         | The dataset object that generates batches for stochastic gradient descent.                                                                                             |
+| `share_embedding_mlp` (`bool`, optional, default=`False`)              | Whether to share the embedding layer in the MLP.                                                                                                                       |
+| `use_cls` (`bool`, optional, default=`False`)     | Whether to use the CLS token to feed into the decoder, or concatenate all vectors outputted in the final transformer layer.                                             |
+| `dim_feedforward` (`int`, optional, default=`None`) | The hidden dimension in the feedforward network.                                                                                                                       |
+| `verbose` (`bool`, optional, default=`False`)     | Whether to print the training progress.                                                                                                                                |
+| `rootpath` (`str`, optional, default=`./`)        | The root path for saving the model.                                                                                                                                    |
+| `name` (`str`, optional, default=`"Transformer"`) | The name of the model.                                                                                                                                                 |
+
 
 # Methods [[source]](https://github.com/TGChenZP/PyTorch2Sklearn/blob/main/PyTorch2Sklearn/__template__.py)
 `_init__([input_dim, output_dim, ...])`: Construct a PyTorch2Sklearn model class
