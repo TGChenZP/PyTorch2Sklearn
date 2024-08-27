@@ -24,6 +24,8 @@ def smoke_test():
 
         from PyTorch2Sklearn.utils.data import TabularDataFactory, TabularDataset
 
+        print("===Import datasets Successful===")
+
         print("======\n")
         print("===SMOKETEST PASSED===")
 
@@ -39,50 +41,64 @@ def test_functions():
 
     # Create a regression dataset
     X_reg, y_reg = make_regression(
-        n_samples=100, n_features=5, noise=0.1, random_state=42)
+        n_samples=100, n_features=5, noise=0.1, random_state=42
+    )
     X_reg_df = pd.DataFrame(
-        X_reg, columns=[f'feature_{i+1}' for i in range(X_reg.shape[1])])
-    y_reg_series = pd.Series(y_reg, name='target')
+        X_reg, columns=[f"feature_{i+1}" for i in range(X_reg.shape[1])]
+    )
+    y_reg_series = pd.Series(y_reg, name="target")
 
     # Create a regression dataset
     X_reg2, y_reg2 = make_regression(
-        n_samples=100, n_features=5, noise=0.1, random_state=42, n_targets=2)
+        n_samples=100, n_features=5, noise=0.1, random_state=42, n_targets=2
+    )
     X_reg2_df = pd.DataFrame(
-        X_reg2, columns=[f'feature_{i+1}' for i in range(X_reg.shape[1])])
+        X_reg2, columns=[f"feature_{i+1}" for i in range(X_reg.shape[1])]
+    )
     y_reg2_series = pd.DataFrame(y_reg2)
 
     # Create a classification dataset with 2 classes
     X_class_2, y_class_2 = make_classification(
-        n_samples=100, n_features=5, n_classes=2, n_clusters_per_class=1, random_state=42)
+        n_samples=100,
+        n_features=5,
+        n_classes=2,
+        n_clusters_per_class=1,
+        random_state=42,
+    )
     X_class_2_df = pd.DataFrame(
-        X_class_2, columns=[f'feature_{i+1}' for i in range(X_class_2.shape[1])])
-    y_class_2_series = pd.Series(y_class_2, name='target')
+        X_class_2, columns=[f"feature_{i+1}" for i in range(X_class_2.shape[1])]
+    )
+    y_class_2_series = pd.Series(y_class_2, name="target")
 
     # Create a classification dataset with 3 classes
     X_class_3, y_class_3 = make_classification(
-        n_samples=100, n_features=5, n_classes=3, n_clusters_per_class=1, random_state=42)
+        n_samples=100,
+        n_features=5,
+        n_classes=3,
+        n_clusters_per_class=1,
+        random_state=42,
+    )
     X_class_3_df = pd.DataFrame(
-        X_class_3, columns=[f'feature_{i+1}' for i in range(X_class_3.shape[1])])
-    y_class_3_series = pd.Series(y_class_3, name='target')
+        X_class_3, columns=[f"feature_{i+1}" for i in range(X_class_3.shape[1])]
+    )
+    y_class_3_series = pd.Series(y_class_3, name="target")
 
     try:
-        test_mlp(X_reg_df, y_reg_series, mode='Regression', output_dim=1)
-        test_transformer(X_reg_df, y_reg_series,
-                         mode='Regression', output_dim=1)
+        test_mlp(X_reg_df, y_reg_series, mode="Regression", output_dim=1)
+        test_transformer(X_reg_df, y_reg_series, mode="Regression", output_dim=1)
 
-        test_mlp(X_reg2_df, y_reg2_series, mode='Regression', output_dim=2)
-        test_transformer(X_reg2_df, y_reg2_series,
-                         mode='Regression', output_dim=2)
+        test_mlp(X_reg2_df, y_reg2_series, mode="Regression", output_dim=2)
+        test_transformer(X_reg2_df, y_reg2_series, mode="Regression", output_dim=2)
 
-        test_mlp(X_class_2_df, y_class_2_series,
-                 mode='Classification', output_dim=2)
-        test_transformer(X_class_2_df, y_class_2_series,
-                         mode='Classification', output_dim=2)
+        test_mlp(X_class_2_df, y_class_2_series, mode="Classification", output_dim=2)
+        test_transformer(
+            X_class_2_df, y_class_2_series, mode="Classification", output_dim=2
+        )
 
-        test_mlp(X_class_3_df, y_class_3_series,
-                 mode='Classification', output_dim=3)
-        test_transformer(X_class_3_df, y_class_3_series,
-                         mode='Classification', output_dim=3)
+        test_mlp(X_class_3_df, y_class_3_series, mode="Classification", output_dim=3)
+        test_transformer(
+            X_class_3_df, y_class_3_series, mode="Classification", output_dim=3
+        )
 
         print("""FUNCTIONALITY TEST PASSED""")
     except Exception as e:
@@ -110,15 +126,15 @@ def test_mlp(X, y, mode, output_dim):
         batchnorm=False,
         grad_clip=False,
         random_state=42,
-        loss=nn.MSELoss() if mode == 'Regression' else nn.CrossEntropyLoss(),
+        loss=nn.MSELoss() if mode == "Regression" else nn.CrossEntropyLoss(),
         mode=mode,
-        name='MLP',
+        name="MLP",
         verbose=1,
         TabularDataFactory=TabularDataFactory,
         TabularDataset=TabularDataset,
-        rootpath='./',
+        rootpath="./",
         output_dim=output_dim,
-        input_dim=5
+        input_dim=5,
     )
     print("===Initialise MLP complete===")
 
@@ -127,7 +143,7 @@ def test_mlp(X, y, mode, output_dim):
     print("===Fitting MLP complete===")
 
     print("===Begin MLP evaluation===")
-    if mode == 'Regression':
+    if mode == "Regression":
         print(r2_score(y, model.predict(X)))
     else:
         print(accuracy_score(y, model.predict(X)))
@@ -160,15 +176,15 @@ def test_transformer(X, y, mode, output_dim):
         batchnorm=False,
         grad_clip=False,
         random_state=42,
-        loss=nn.MSELoss() if mode == 'Regression' else nn.CrossEntropyLoss(),
+        loss=nn.MSELoss() if mode == "Regression" else nn.CrossEntropyLoss(),
         mode=mode,
-        name='Transformer',
+        name="Transformer",
         verbose=1,
         TabularDataFactory=TabularDataFactory,
         TabularDataset=TabularDataset,
-        rootpath='./',
+        rootpath="./",
         output_dim=output_dim,
-        input_dim=5
+        input_dim=5,
     )
 
     print("===Initialise Transformer complete===")
@@ -178,12 +194,11 @@ def test_transformer(X, y, mode, output_dim):
     print("===Fitting Transformer complete===")
 
     print("===Begin Transformer evaluation===")
-    if mode == 'Regression':
+    if mode == "Regression":
         print(r2_score(y, model.predict(X)))
     else:
         print(accuracy_score(y, model.predict(X)))
-    print(
-        f"===Evaluate Transformer {mode} {output_dim} class/dim test Complete===")
+    print(f"===Evaluate Transformer {mode} {output_dim} class/dim test Complete===")
     print()
 
 
@@ -192,7 +207,7 @@ def local_test():
     test_functions()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     local_test()
 
