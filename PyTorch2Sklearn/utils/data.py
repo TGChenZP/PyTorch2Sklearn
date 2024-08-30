@@ -57,6 +57,4 @@ def TabularDataFactory(X, y=None, mode='Classification'):
         if type(y) != np.ndarray:
             y = y.values
 
-        print(type(X), type(y))
-
         return X.tolist(), y.tolist()
