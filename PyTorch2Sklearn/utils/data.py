@@ -42,14 +42,21 @@ def TabularDataFactory(X, y=None, mode='Classification'):
     """
 
     if y is None:
-        return X.values.tolist()
+        if type(X) != np.ndarray:
+            X = X.values
+        return X.tolist()
     else:
         if mode == 'Classification':
             # need to change to multi-class probability vector for classification
             encoder = OneHotEncoder(
                 sparse_output=False, categories='auto', handle_unknown='ignore')
             y = encoder.fit_transform(np.array(y).reshape(-1, 1))
-            return X.values.tolist(), y.tolist()
-        else:
-            # regression: just output the y values as per original
-            return X.values.tolist(), y.values.tolist()
+
+        if type(X) != np.ndarray:
+            X = X.values
+        if type(y) != np.ndarray:
+            y = y.values
+
+        print(type(X), type(y))
+
+        return X.tolist(), y.tolist()

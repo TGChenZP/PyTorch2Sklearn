@@ -66,6 +66,19 @@ class TorchToSklearn_Model(object):
 
         self.model.train()
 
+        nan_in_train_x = train_x.isna().sum()
+
+        if nan_in_train_x.any():
+            print("train_x contains NaN values in the following columns:")
+            print(nan_in_train_x[nan_in_train_x > 0])
+
+        nan_in_train_y = train_y.isna().sum()
+        if nan_in_train_y.any():
+            print("train_y contains NaN values in the following columns:")
+            print(nan_in_train_y[nan_in_train_y > 0])
+
+        already_warned_nan_loss = False
+
         # if classification turn labels into e.g. 0 1 2 3 so data factory can turn into probability vectors
         if self.CFG['mode'] == 'Classification':
             label_list = list(set(train_y))
@@ -112,6 +125,10 @@ class TorchToSklearn_Model(object):
                         nn.utils.clip_grad_norm_(self.model.parameters(), 2.0)
                     self.optimizer.step()
 
+                    # Check if the loss is NaN
+                    if torch.isnan(loss) and not already_warned_nan_loss:
+                        print("Warning: Loss is NaN!")
+                        already_warned_nan_loss = True
         else:
             for epoch in range(self.CFG['epochs']):
 
@@ -138,6 +155,11 @@ class TorchToSklearn_Model(object):
                     if self.CFG['grad_clip']:
                         nn.utils.clip_grad_norm_(self.model.parameters(), 2.0)
                     self.optimizer.step()
+
+                    # Check if the loss is NaN
+                    if torch.isnan(loss) and not already_warned_nan_loss:
+                        print("Warning: Loss is NaN!")
+                        already_warned_nan_loss = True
 
         self._is_fitted = True
 
@@ -180,7 +202,7 @@ class TorchToSklearn_Model(object):
         if self.CFG['mode'] == 'Classification':  # turn labels back to normal
             valid_pred = [self.decode_label_dict[pred] for pred in valid_pred]
 
-        return valid_pred
+        return np.array(valid_pred)
 
     def predict_proba(self, val_x: pd.DataFrame) -> np.ndarray:
         """ Predict probabilities for classification tasks. 
@@ -212,7 +234,7 @@ class TorchToSklearn_Model(object):
 
             valid_pred_probs = np.concatenate(valid_pred_probs, axis=0)
 
-        return valid_pred_probs
+        return np.array(valid_pred_probs)
 
     def __sklearn_is_fitted__(self):
         """
