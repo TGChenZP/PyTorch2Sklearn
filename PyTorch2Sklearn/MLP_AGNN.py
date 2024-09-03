@@ -147,8 +147,8 @@ class MLP_AGNN(TorchToSklearn_GraphModel):
         batch_size: int,
         epochs: int,
         loss,
-        TabularDataFactory,
-        TabularDataset,
+        DataFactory,
+        Dataset,
         lr: float = 1e-3,
         random_state: int = 42,
         grad_clip: bool = False,
@@ -175,10 +175,13 @@ class MLP_AGNN(TorchToSklearn_GraphModel):
             "grad_clip": grad_clip,
             "batchnorm": batchnorm,
             "loss": loss,
-            "TabularDataFactory": TabularDataFactory,
-            "TabularDataset": TabularDataset,
+            "DataFactory": DataFactory,
+            "Dataset": Dataset,
             "verbose": verbose,
             "rootpath": rootpath,
             "name": name,
         }
         super().__init__(self.CFG, name=self.CFG["name"])
+
+
+# TODO: Bottleneck, further_input
