@@ -120,7 +120,7 @@ class Transformer(TorchToSklearn_Model):
                 )
 
             # Last layer
-            mlp_layers.append(LinearLayer(CFG, CFG["hidden_dim"], CFG["output_dim"]))
+            mlp_layers.append(nn.Linear(CFG["hidden_dim"], CFG["output_dim"]))
 
             # Combine the layers into one sequential model
             self.out_mlp = nn.Sequential(*mlp_layers)
