@@ -1,9 +1,42 @@
-from PyTorch2Sklearn.__template__ import TorchToSklearn_Model
+from PyTorch2Sklearn.__template__ import TorchToSklearn_GraphModel
 from PyTorch2Sklearn.Modules import *
 
 
-class MLP(TorchToSklearn_Model):
+class MLP_AGNN(TorchToSklearn_GraphModel):
     """MLP Classifier or Regressor that can be used as a sklearn model"""
+
+    class DecoderMLP(nn.Module):
+        """MLP layers as decoder: Linear -> ReLU -> Dropout (last layer is Linear)"""
+
+        def __init__(self, CFG, hidden_dim, dropout, batchnorm):
+            super(MLP_AGNN.DecoderMLP, self).__init__()
+
+            torch.manual_seed(CFG["random_state"])
+
+            self.CFG = CFG
+
+            mlp_layers = []
+
+            # Middle layers (if num_decoder_layers > 1)
+            for _ in range(CFG["num_decoder_layers"] - 1):
+                mlp_layers.append(
+                    LinearLayer(
+                        CFG,
+                        CFG["hidden_dim"],
+                        CFG["hidden_dim"],
+                        CFG["dropout"],
+                    )
+                )
+
+            # Last layer
+            mlp_layers.append(nn.Linear(CFG["hidden_dim"], CFG["output_dim"]))
+
+            # Combine the layers into one sequential model
+            self.out_mlp = nn.Sequential(*mlp_layers)
+
+        def forward(self, X):
+
+            return self.out_mlp(X)
 
     class Model(nn.Module):
         def __init__(self, CFG):
@@ -12,11 +45,12 @@ class MLP(TorchToSklearn_Model):
 
             torch.manual_seed(self.CFG["random_state"])
 
+            # Encoder
             if (
                 self.CFG["hidden_dim"] == 0
             ):  # hidden_dim = 0 => shrink the hidden layer size
                 step_size = (self.CFG["input_dim"] - self.CFG["output_dim"]) // (
-                    self.CFG["hidden_layers"] - 1
+                    self.CFG["num_encoder_layers"] - 1
                 )
                 if step_size == 0:
                     step_size = 1
@@ -29,12 +63,16 @@ class MLP(TorchToSklearn_Model):
                         > self.CFG["output_dim"]
                         else self.CFG["output_dim"]
                     )
-                    for i in range(1, self.CFG["hidden_layers"])
+                    for i in range(1, self.CFG["num_encoder_layers"])
                 ]
+
+                # set effective hidden_dim
+                self.CFG["hidden_dim"] = self.hidden_layer_size[-1]
 
             else:  # hidden_dim != 0 => use the same hidden layer size; note hidden_layers is the number of hidden layers including the output layer but excluding the input layer
                 self.hidden_layer_size = [
-                    self.CFG["hidden_dim"] for _ in range(self.CFG["hidden_layers"])
+                    self.CFG["hidden_dim"]
+                    for _ in range(self.CFG["num_encoder_layers"])
                 ]
 
             layers = []
@@ -53,7 +91,7 @@ class MLP(TorchToSklearn_Model):
             layers.append(nn.ReLU())
 
             # Hidden layers
-            for i in range(self.CFG["hidden_layers"] - 1):
+            for i in range(self.CFG["num_encoder_layers"] - 1):
                 layers.append(
                     LinearLayer(
                         self.CFG,
@@ -66,14 +104,35 @@ class MLP(TorchToSklearn_Model):
                     layers.append(nn.BatchNorm1d(self.hidden_layer_size[i + 1]))
                 layers.append(nn.ReLU())
 
-            # Output layer
-            layers.append(nn.Linear(self.hidden_layer_size[-1], self.CFG["output_dim"]))
+            self.encoder = nn.Sequential(*layers)
 
-            self.full_model = nn.Sequential(*layers)
+            # Graph layers
+            if self.CFG["graph_nhead"] == 0:
+                self.graph_layer = nn.ModuleList(
+                    [GCN(CFG) for _ in range(CFG["num_graph_layers"])]
+                )
+            else:
+                self.graph_layer = nn.ModuleList(
+                    [
+                        A_GCN(CFG, CFG["graph_nhead"])
+                        for _ in range(CFG["num_graph_layers"])
+                    ]
+                )
 
-        def forward(self, X):
+            # Decoder
+            self.decoder = MLP_AGNN.DecoderMLP(
+                self.CFG,
+                self.CFG["hidden_dim"],
+                self.CFG["dropout"],
+                self.CFG["batchnorm"],
+            )
 
-            y = self.full_model(X)
+        def forward(self, X, graph):
+
+            x = self.encoder(X)
+            for layer in self.graph_layer:
+                x = layer(x, graph)
+            y = self.decoder(x)
 
             return y
 
@@ -81,15 +140,18 @@ class MLP(TorchToSklearn_Model):
         self,
         input_dim: int,
         output_dim: int,
-        hidden_layers: int,
+        num_encoder_layers: int,
+        num_graph_layers: int,
+        num_decoder_layers: int,
+        graph_nhead: int,
         hidden_dim: int,
         dropout: float,
         mode: str,
         batch_size: int,
         epochs: int,
         loss,
-        TabularDataFactory,
-        TabularDataset,
+        DataFactory,
+        graph="J",
         lr: float = 1e-3,
         random_state: int = 42,
         grad_clip: bool = False,
@@ -103,7 +165,10 @@ class MLP(TorchToSklearn_Model):
         self.CFG = {
             "input_dim": input_dim,
             "output_dim": output_dim,
-            "hidden_layers": hidden_layers,
+            "num_encoder_layers": num_encoder_layers,
+            "num_graph_layers": num_graph_layers,
+            "num_decoder_layers": num_decoder_layers,
+            "graph_nhead": graph_nhead,
             "hidden_dim": hidden_dim,
             "dropout": dropout,
             "mode": mode,
@@ -113,11 +178,14 @@ class MLP(TorchToSklearn_Model):
             "random_state": random_state,
             "grad_clip": grad_clip,
             "batchnorm": batchnorm,
+            "DataFactory": DataFactory,
             "loss": loss,
-            "TabularDataFactory": TabularDataFactory,
-            "TabularDataset": TabularDataset,
+            "graph": graph,
             "verbose": verbose,
             "rootpath": rootpath,
             "name": name,
         }
         super().__init__(self.CFG, name=self.CFG["name"])
+
+
+# TODO: Bottleneck, further_input

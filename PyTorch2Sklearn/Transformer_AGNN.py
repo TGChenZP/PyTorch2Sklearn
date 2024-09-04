@@ -1,15 +1,15 @@
-from PyTorch2Sklearn.__template__ import TorchToSklearn_Model
+from PyTorch2Sklearn.__template__ import TorchToSklearn_GraphModel
 from PyTorch2Sklearn.Modules import *
 
 
-class Transformer(TorchToSklearn_Model):
+class Transformer_AGNN(TorchToSklearn_GraphModel):
     """Encoder only transformer Classifier or Regressor that can be used as a sklearn model"""
 
     class MLPPerFeature(nn.Module):
         """Feature Embedding Layer for input of each feature scalar: Linear -> ReLU -> Dropout"""
 
         def __init__(self, CFG, hidden_dim, dropout, batchnorm):
-            super(Transformer.MLPPerFeature, self).__init__()
+            super(Transformer_AGNN.MLPPerFeature, self).__init__()
 
             torch.manual_seed(CFG["random_state"])
 
@@ -36,7 +36,8 @@ class Transformer(TorchToSklearn_Model):
             if self.CFG["share_embedding_mlp"]:
                 # Apply the shared MLP layer to each feature separately
                 mlp_output = torch.stack(
-                    [self.shared_mlp(X[:, i : i + 1]) for i in range(X.size(1))], dim=1
+                    [self.shared_mlp(X[:, i : i + 1]) for i in range(X.size(1))],
+                    dim=1,
                 )
             else:
                 # Apply the MLP layer to each feature separately
@@ -55,7 +56,7 @@ class Transformer(TorchToSklearn_Model):
             dropout,
             num_transformer_layers,
         ):
-            super(Transformer.TransformerBlock, self).__init__()
+            super(Transformer_AGNN.TransformerBlock, self).__init__()
 
             torch.manual_seed(CFG["random_state"])
 
@@ -90,7 +91,7 @@ class Transformer(TorchToSklearn_Model):
         """MLP layers as decoder: Linear -> ReLU -> Dropout (last layer is Linear)"""
 
         def __init__(self, CFG, hidden_dim, dropout, batchnorm):
-            super(Transformer.DecoderMLP, self).__init__()
+            super(Transformer_AGNN.DecoderMLP, self).__init__()
 
             torch.manual_seed(CFG["random_state"])
 
@@ -98,18 +99,8 @@ class Transformer(TorchToSklearn_Model):
 
             mlp_layers = []
 
-            if CFG["use_cls"]:
-                input_dim = CFG["hidden_dim"]
-            else:
-                input_dim = CFG["input_dim"] * CFG["hidden_dim"]
-
-            # First layer
-            mlp_layers.append(
-                LinearLayer(CFG, input_dim, CFG["hidden_dim"], CFG["dropout"])
-            )
-
-            # Middle layers (if num_mlp_layers > 2)
-            for _ in range(CFG["num_mlp_layers"] - 2):
+            # Middle layers (if num_mlp_layers > 1)
+            for _ in range(CFG["num_mlp_layers"] - 1):
                 mlp_layers.append(
                     LinearLayer(
                         CFG,
@@ -129,6 +120,35 @@ class Transformer(TorchToSklearn_Model):
 
             return self.out_mlp(X)
 
+    class ProjectionMLP(nn.Module):
+        """MLP layers as decoder: Linear -> Dropout"""
+
+        def __init__(self, CFG, hidden_dim, dropout, batchnorm):
+            super(Transformer_AGNN.ProjectionMLP, self).__init__()
+
+            torch.manual_seed(CFG["random_state"])
+
+            self.CFG = CFG
+
+            mlp_layers = []
+
+            if CFG["use_cls"]:
+                input_dim = CFG["hidden_dim"]
+            else:
+                input_dim = CFG["input_dim"] * CFG["hidden_dim"]
+
+            # First layer
+            mlp_layers.append(
+                LinearLayer(CFG, input_dim, CFG["hidden_dim"], CFG["dropout"])
+            )
+
+            # Combine the layers into one sequential model
+            self.out_mlp = nn.Sequential(*mlp_layers)
+
+        def forward(self, X):
+
+            return self.out_mlp(X)
+
     class Model(nn.Module):
         def __init__(self, CFG):
             super().__init__()
@@ -138,12 +158,12 @@ class Transformer(TorchToSklearn_Model):
             self._warning()
 
             # MLP layer for each feature
-            self.mlp_per_feature = Transformer.MLPPerFeature(
+            self.mlp_per_feature = Transformer_AGNN.MLPPerFeature(
                 CFG, CFG["hidden_dim"], CFG["dropout"], CFG["batchnorm"]
             )
 
             # Transformer block
-            self.transformer_block = Transformer.TransformerBlock(
+            self.transformer_block = Transformer_AGNN.TransformerBlock(
                 CFG,
                 CFG["hidden_dim"],
                 CFG["nhead"],
@@ -152,12 +172,30 @@ class Transformer(TorchToSklearn_Model):
                 CFG["num_transformer_layers"],
             )
 
-            # MLP layers as decoder
-            self.out_mlp = Transformer.DecoderMLP(
+            # projects the transformer output to hidden_dim so graph layer can process it.
+            self.projection_mlp = Transformer_AGNN.ProjectionMLP(
                 CFG, CFG["hidden_dim"], CFG["dropout"], CFG["batchnorm"]
             )
 
-        def forward(self, X):
+            # Graph layers
+            if self.CFG["graph_nhead"] == 0:
+                self.graph_layer = nn.ModuleList(
+                    [GCN(CFG) for _ in range(CFG["num_graph_layers"])]
+                )
+            else:
+                self.graph_layer = nn.ModuleList(
+                    [
+                        A_GCN(CFG, CFG["graph_nhead"])
+                        for _ in range(CFG["num_graph_layers"])
+                    ]
+                )
+
+            # MLP layers as decoder
+            self.out_mlp = Transformer_AGNN.DecoderMLP(
+                CFG, CFG["hidden_dim"], CFG["dropout"], CFG["batchnorm"]
+            )
+
+        def forward(self, X, graph):
 
             # Forward pass through MLP layer for each feature
             mlp_output = self.mlp_per_feature(X)
@@ -174,10 +212,10 @@ class Transformer(TorchToSklearn_Model):
 
             transformer_output = self.transformer_block(mlp_output)
 
-            if self.CFG["use_cls"]:  # predict just using cls
-                y = self.out_mlp(transformer_output[:, 0, :])
-            else:  # concatenate the output from all layers in transformer_output
-                y = self.out_mlp(
+            if self.CFG["use_cls"]:
+                x = self.projection_mlp(transformer_output[:, 0, :])
+            else:
+                x = self.projection_mlp(
                     torch.cat(
                         [
                             transformer_output[:, i, :]
@@ -186,6 +224,11 @@ class Transformer(TorchToSklearn_Model):
                         dim=1,
                     )
                 )
+
+            for layer in self.graph_layer:
+                x = layer(x, graph)
+
+            y = self.out_mlp(x)
 
             return y
 
@@ -202,16 +245,18 @@ class Transformer(TorchToSklearn_Model):
         input_dim: int,
         output_dim: int,
         num_transformer_layers: int,
+        num_graph_layers: int,
         num_mlp_layers: int,
         hidden_dim: int,
         dropout: float,
         nhead: int,
+        graph_nhead: int,
         mode: str,
         batch_size: int,
         epochs: int,
         loss,
-        TabularDataFactory,
-        TabularDataset,
+        DataFactory,
+        graph="J",
         share_embedding_mlp: bool = False,
         use_cls: bool = False,
         dim_feedforward: int = None,
@@ -231,10 +276,12 @@ class Transformer(TorchToSklearn_Model):
             "input_dim": input_dim,
             "output_dim": output_dim,
             "num_transformer_layers": num_transformer_layers,
+            "num_graph_layers": num_graph_layers,
             "num_mlp_layers": num_mlp_layers,
             "hidden_dim": hidden_dim,
             "dim_feedforward": dim_feedforward,
             "nhead": nhead,
+            "graph_nhead": graph_nhead,
             "use_cls": use_cls,
             "dropout": dropout,
             "mode": mode,
@@ -245,8 +292,8 @@ class Transformer(TorchToSklearn_Model):
             "grad_clip": grad_clip,
             "batchnorm": batchnorm,
             "loss": loss,
-            "TabularDataFactory": TabularDataFactory,
-            "TabularDataset": TabularDataset,
+            "DataFactory": DataFactory,
+            "graph": graph,
             "verbose": verbose,
             "rootpath": rootpath,
             "share_embedding_mlp": share_embedding_mlp,
@@ -254,3 +301,6 @@ class Transformer(TorchToSklearn_Model):
         }
 
         super().__init__(self.CFG, name=self.CFG["name"])
+
+
+# TODO: Bottleneck, further_input
