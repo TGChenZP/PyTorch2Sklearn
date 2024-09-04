@@ -36,7 +36,8 @@ class Transformer_AGNN(TorchToSklearn_GraphModel):
             if self.CFG["share_embedding_mlp"]:
                 # Apply the shared MLP layer to each feature separately
                 mlp_output = torch.stack(
-                    [self.shared_mlp(X[:, i : i + 1]) for i in range(X.size(1))], dim=1
+                    [self.shared_mlp(X[:, i : i + 1]) for i in range(X.size(1))],
+                    dim=1,
                 )
             else:
                 # Apply the MLP layer to each feature separately
@@ -110,7 +111,7 @@ class Transformer_AGNN(TorchToSklearn_GraphModel):
                 )
 
             # Last layer
-            mlp_layers.append(LinearLayer(CFG, CFG["hidden_dim"], CFG["output_dim"]))
+            mlp_layers.append(nn.Linear(CFG["hidden_dim"], CFG["output_dim"]))
 
             # Combine the layers into one sequential model
             self.out_mlp = nn.Sequential(*mlp_layers)
@@ -178,11 +179,11 @@ class Transformer_AGNN(TorchToSklearn_GraphModel):
 
             # Graph layers
             if self.CFG["graph_nhead"] == 0:
-                self.graph_layer = nn.Sequential(
+                self.graph_layer = nn.ModuleList(
                     [GCN(CFG) for _ in range(CFG["num_graph_layers"])]
                 )
             else:
-                self.graph_layer = nn.Sequential(
+                self.graph_layer = nn.ModuleList(
                     [
                         A_GCN(CFG, CFG["graph_nhead"])
                         for _ in range(CFG["num_graph_layers"])
@@ -212,9 +213,9 @@ class Transformer_AGNN(TorchToSklearn_GraphModel):
             transformer_output = self.transformer_block(mlp_output)
 
             if self.CFG["use_cls"]:
-                graph_input = self.projection_mlp(transformer_output[:, 0, :])
+                x = self.projection_mlp(transformer_output[:, 0, :])
             else:
-                graph_input = self.projection_mlp(
+                x = self.projection_mlp(
                     torch.cat(
                         [
                             transformer_output[:, i, :]
@@ -224,9 +225,10 @@ class Transformer_AGNN(TorchToSklearn_GraphModel):
                     )
                 )
 
-            graph_output = self.graph_layer(graph_input, graph)
+            for layer in self.graph_layer:
+                x = layer(x, graph)
 
-            y = self.out_mlp(graph_output)
+            y = self.out_mlp(x)
 
             return y
 
@@ -254,7 +256,6 @@ class Transformer_AGNN(TorchToSklearn_GraphModel):
         epochs: int,
         loss,
         DataFactory,
-        Dataset,
         graph="J",
         share_embedding_mlp: bool = False,
         use_cls: bool = False,
@@ -292,7 +293,6 @@ class Transformer_AGNN(TorchToSklearn_GraphModel):
             "batchnorm": batchnorm,
             "loss": loss,
             "DataFactory": DataFactory,
-            "Dataset": Dataset,
             "graph": graph,
             "verbose": verbose,
             "rootpath": rootpath,

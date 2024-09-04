@@ -29,7 +29,7 @@ class MLP_AGNN(TorchToSklearn_GraphModel):
                 )
 
             # Last layer
-            mlp_layers.append(LinearLayer(CFG, CFG["hidden_dim"], CFG["output_dim"]))
+            mlp_layers.append(nn.Linear(CFG["hidden_dim"], CFG["output_dim"]))
 
             # Combine the layers into one sequential model
             self.out_mlp = nn.Sequential(*mlp_layers)
@@ -108,11 +108,11 @@ class MLP_AGNN(TorchToSklearn_GraphModel):
 
             # Graph layers
             if self.CFG["graph_nhead"] == 0:
-                self.graph_layer = nn.Sequential(
+                self.graph_layer = nn.ModuleList(
                     [GCN(CFG) for _ in range(CFG["num_graph_layers"])]
                 )
             else:
-                self.graph_layer = nn.Sequential(
+                self.graph_layer = nn.ModuleList(
                     [
                         A_GCN(CFG, CFG["graph_nhead"])
                         for _ in range(CFG["num_graph_layers"])
@@ -129,9 +129,10 @@ class MLP_AGNN(TorchToSklearn_GraphModel):
 
         def forward(self, X, graph):
 
-            encoder_mlp_output = self.encoder(X)
-            graph_output = self.graph_layer(encoder_mlp_output, graph)
-            y = self.decoder(graph_output)
+            x = self.encoder(X)
+            for layer in self.graph_layer:
+                x = layer(x, graph)
+            y = self.decoder(x)
 
             return y
 
@@ -139,8 +140,10 @@ class MLP_AGNN(TorchToSklearn_GraphModel):
         self,
         input_dim: int,
         output_dim: int,
-        hidden_layers: int,
+        num_encoder_layers: int,
         num_graph_layers: int,
+        num_decoder_layers: int,
+        graph_nhead: int,
         hidden_dim: int,
         dropout: float,
         mode: str,
@@ -148,7 +151,6 @@ class MLP_AGNN(TorchToSklearn_GraphModel):
         epochs: int,
         loss,
         DataFactory,
-        Dataset,
         graph="J",
         lr: float = 1e-3,
         random_state: int = 42,
@@ -163,9 +165,10 @@ class MLP_AGNN(TorchToSklearn_GraphModel):
         self.CFG = {
             "input_dim": input_dim,
             "output_dim": output_dim,
-            "num_encoder_layers": hidden_layers,
+            "num_encoder_layers": num_encoder_layers,
             "num_graph_layers": num_graph_layers,
-            "num_decoder_layers": hidden_layers,
+            "num_decoder_layers": num_decoder_layers,
+            "graph_nhead": graph_nhead,
             "hidden_dim": hidden_dim,
             "dropout": dropout,
             "mode": mode,
@@ -175,9 +178,8 @@ class MLP_AGNN(TorchToSklearn_GraphModel):
             "random_state": random_state,
             "grad_clip": grad_clip,
             "batchnorm": batchnorm,
-            "loss": loss,
             "DataFactory": DataFactory,
-            "Dataset": Dataset,
+            "loss": loss,
             "graph": graph,
             "verbose": verbose,
             "rootpath": rootpath,
