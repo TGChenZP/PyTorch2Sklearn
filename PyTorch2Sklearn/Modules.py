@@ -98,23 +98,23 @@ class A_GCN(nn.Module):
         self.layer_norm2 = nn.LayerNorm(self.CFG["hidden_dim"])
 
     def forward(self, x, graph):
+
         Q = self.dropout(self.QLinear(x))
         K = self.dropout(self.KLinear(x))
         V = self.dropout(self.VLinear(x))
 
         attention_out_list = []
-        for j in range(self.CFG.n_heads):
+        for j in range(self.n_heads):
 
             Q_tmp = Q[:, j * self.dim_per_head : (j + 1) * self.dim_per_head]
             K_tmp = K[:, j * self.dim_per_head : (j + 1) * self.dim_per_head]
             V_tmp = V[:, j * self.dim_per_head : (j + 1) * self.dim_per_head]
-
             attention_out_tmp = (
                 self.dropout(
                     self.softmax(
                         (Q_tmp @ torch.transpose(K_tmp, 0, 1))
                         * graph
-                        / np.sqrt(self.dim_per_head)
+                        / np.sqrt(self.dim_per_head),
                     )
                 )
                 @ V_tmp
