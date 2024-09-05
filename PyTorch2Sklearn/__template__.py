@@ -29,7 +29,8 @@ class TorchToSklearn_Model(object):
         self.optimizer = AdamW(self.model.parameters(), lr=self.CFG["lr"])
         self.criterion = self.CFG["loss"]
 
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.device = torch.device(
+            "cuda" if torch.cuda.is_available() else "cpu")
         self.CFG["device"] = self.device
         self.model.to(self.device)
         self.criterion.to(self.device)
@@ -90,8 +91,10 @@ class TorchToSklearn_Model(object):
         if self.CFG["mode"] == "Classification":
             label_list = list(set(train_y))
             label_list.sort()
-            self.encode_label_dict = {label: i for i, label in enumerate(label_list)}
-            self.decode_label_dict = {i: label for i, label in enumerate(label_list)}
+            self.encode_label_dict = {
+                label: i for i, label in enumerate(label_list)}
+            self.decode_label_dict = {
+                i: label for i, label in enumerate(label_list)}
 
             train_y = [self.encode_label_dict[y] for y in train_y]
 
@@ -235,7 +238,8 @@ class TorchToSklearn_Model(object):
         self.model.eval()
 
         with torch.no_grad():
-            x_list = self.CFG["TabularDataFactory"](val_x, mode=self.CFG["mode"])
+            x_list = self.CFG["TabularDataFactory"](
+                val_x, mode=self.CFG["mode"])
             tabular_dataset = self.CFG["TabularDataset"](x_list)
             val_dataloader = DataLoader(
                 tabular_dataset, batch_size=self.CFG["batch_size"], shuffle=False
@@ -285,7 +289,8 @@ class TorchToSklearn_GraphModel(object):
         self.optimizer = AdamW(self.model.parameters(), lr=self.CFG["lr"])
         self.criterion = self.CFG["loss"]
 
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.device = torch.device(
+            "cuda" if torch.cuda.is_available() else "cpu")
         self.CFG["device"] = self.device
         self.model.to(self.device)
         self.criterion.to(self.device)
@@ -340,15 +345,17 @@ class TorchToSklearn_GraphModel(object):
             print(nan_in_train_y[nan_in_train_y > 0])
 
         already_warned_nan_loss = False
-        print(train_y.columns)
-        self.CFG["target"] = [column for column in train_y.columns if "idx" != column]
+        self.CFG["target"] = [
+            column for column in train_y.columns if "idx" != column]
 
         # if classification turn labels into e.g. 0 1 2 3 so data factory can turn into probability vectors
         if self.CFG["mode"] == "Classification":
             label_list = list(set(train_y[self.CFG["target"][0]]))
             label_list.sort()
-            self.encode_label_dict = {label: i for i, label in enumerate(label_list)}
-            self.decode_label_dict = {i: label for i, label in enumerate(label_list)}
+            self.encode_label_dict = {
+                label: i for i, label in enumerate(label_list)}
+            self.decode_label_dict = {
+                i: label for i, label in enumerate(label_list)}
 
             train_y[self.CFG["target"][0]] = [
                 self.encode_label_dict[y] for y in train_y[self.CFG["target"][0]].values
@@ -392,7 +399,8 @@ class TorchToSklearn_GraphModel(object):
 
                     self.optimizer.zero_grad()
                     graph = (
-                        torch.ones(len(y)).to(self.device)
+                        (torch.ones(len(y)).unsqueeze(0).T @
+                         torch.ones(len(y)).unsqueeze(0)).to(self.device)
                         if self.CFG["graph"] == "J"
                         else self.CFG["graph"].to(self.device)
                     )
@@ -432,7 +440,8 @@ class TorchToSklearn_GraphModel(object):
                     self.optimizer.zero_grad()
 
                     graph = (
-                        torch.ones(len(y)).to(self.device)
+                        (torch.ones(len(X)).unsqueeze(0).T @
+                         torch.ones(len(X)).unsqueeze(0)).to(self.device)
                         if self.CFG["graph"] == "J"
                         else self.CFG["graph"].to(self.device)
                     )
@@ -482,13 +491,13 @@ class TorchToSklearn_GraphModel(object):
                 )
 
                 graph = (
-                    torch.ones(len(x_batch)).to(self.device)
+                    (torch.ones(len(x_batch)).unsqueeze(0).T @
+                     torch.ones(len(x_batch)).unsqueeze(0)).to(self.device)
                     if self.CFG["graph"] == "J"
                     else self.CFG["graph"].to(self.device)
                 )
 
                 pred = self.model(x_batch, graph)
-
                 # if regression, squeeze the dimension, if classification, argmax.
                 predicted_labels = (
                     torch.argmax(pred, dim=1)
@@ -526,10 +535,12 @@ class TorchToSklearn_GraphModel(object):
             valid_pred_probs = []
 
             for mini_batch_number in range(len(x_list)):
-                x_batch = torch.FloatTensor(x_list[mini_batch_number]).to(self.device)
+                x_batch = torch.FloatTensor(
+                    x_list[mini_batch_number]).to(self.device)
 
                 graph = (
-                    torch.ones(len(x_batch)).to(self.device)
+                    (torch.ones(len(x_batch)).unsqueeze(0).T @
+                     torch.ones(len(x_batch)).unsqueeze(0)).to(self.device)
                     if self.CFG["graph"] == "J"
                     else self.CFG["graph"].to(self.device)
                 )
