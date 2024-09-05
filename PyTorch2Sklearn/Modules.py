@@ -55,7 +55,9 @@ class GCN(nn.Module):
         self.CFG = CFG
 
         torch.manual_seed(self.CFG["random_state"])
-        self.gcn = nn.Linear(self.CFG["hidden_dim"], self.CFG["hidden_dim"], bias=True)
+        self.gcn = nn.Sequential(*[nn.Linear(self.CFG["hidden_dim"], self.CFG["hidden_dim"], bias=True),
+                                   nn.ReLU(),
+                                   nn.Dropout(self.CFG['dropout'])])
 
     def forward(self, x, graph):
         return self.gcn(graph @ x)
@@ -106,9 +108,9 @@ class A_GCN(nn.Module):
         attention_out_list = []
         for j in range(self.n_heads):
 
-            Q_tmp = Q[:, j * self.dim_per_head : (j + 1) * self.dim_per_head]
-            K_tmp = K[:, j * self.dim_per_head : (j + 1) * self.dim_per_head]
-            V_tmp = V[:, j * self.dim_per_head : (j + 1) * self.dim_per_head]
+            Q_tmp = Q[:, j * self.dim_per_head: (j + 1) * self.dim_per_head]
+            K_tmp = K[:, j * self.dim_per_head: (j + 1) * self.dim_per_head]
+            V_tmp = V[:, j * self.dim_per_head: (j + 1) * self.dim_per_head]
             attention_out_tmp = (
                 self.dropout(
                     self.softmax(
@@ -141,15 +143,15 @@ class A_GCN(nn.Module):
         return x_add_forward_normalised
 
 
-class GraphBottleNeckLayer(nn.Module):
-    """Compresses GNN to 1-d output, so decode MLP can be treated as linear regression and GNN is treated as feature extractor"""
+# class GraphBottleNeckLayer(nn.Module):
+#     """Compresses GNN to 1-d output, so decode MLP can be treated as linear regression and GNN is treated as feature extractor"""
 
-    def __init__(self, CFG):
-        super().__init__()
-        self.CFG = CFG
+#     def __init__(self, CFG):
+#         super().__init__()
+#         self.CFG = CFG
 
-        torch.manual_seed(self.CFG.random_state)
-        self.linear = nn.Linear(self.CFG["hidden_dim"], 1, bias=True)
+#         torch.manual_seed(self.CFG.random_state)
+#         self.linear = nn.Linear(self.CFG["hidden_dim"], 1, bias=True)
 
-    def forward(self, x):
-        return self.linear(x)
+#     def forward(self, x):
+#         return self.linear(x)
