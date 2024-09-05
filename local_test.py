@@ -88,7 +88,8 @@ def test_functions():
         random_state=42,
     )
     X_class_2_df = pd.DataFrame(
-        X_class_2, columns=[f"feature_{i+1}" for i in range(X_class_2.shape[1])]
+        X_class_2, columns=[
+            f"feature_{i+1}" for i in range(X_class_2.shape[1])]
     )
     y_class_2_series = pd.Series(y_class_2, name="target")
 
@@ -106,7 +107,8 @@ def test_functions():
         random_state=42,
     )
     X_class_3_df = pd.DataFrame(
-        X_class_3, columns=[f"feature_{i+1}" for i in range(X_class_3.shape[1])]
+        X_class_3, columns=[
+            f"feature_{i+1}" for i in range(X_class_3.shape[1])]
     )
     y_class_3_series = pd.Series(y_class_3, name="target")
 
@@ -117,39 +119,111 @@ def test_functions():
 
     try:
         test_mlp(X_reg_df, y_reg_series, mode="Regression", output_dim=1)
-        test_transformer(X_reg_df, y_reg_series, mode="Regression", output_dim=1)
-        test_mlp_agnn(x_reg_graph_df, y_reg_graph_df, mode="Regression", output_dim=1)
+        test_transformer(X_reg_df, y_reg_series,
+                         mode="Regression", output_dim=1)
+        test_mlp_agnn(x_reg_graph_df, y_reg_graph_df,
+                      mode="Regression", output_dim=1, graph_layer=1, attention=8)
+        test_mlp_agnn(x_reg_graph_df, y_reg_graph_df,
+                      mode="Regression", output_dim=1, graph_layer=2, attention=8)
+        test_mlp_agnn(x_reg_graph_df, y_reg_graph_df,
+                      mode="Regression", output_dim=1, graph_layer=1, attention=0)
+        test_mlp_agnn(x_reg_graph_df, y_reg_graph_df,
+                      mode="Regression", output_dim=1, graph_layer=2, attention=0)
         test_transformer_agnn(
-            x_reg_graph_df, y_reg_graph_df, mode="Regression", output_dim=1
+            x_reg_graph_df, y_reg_graph_df, mode="Regression", output_dim=1, graph_layer=1, attention=8
+        )
+        test_transformer_agnn(
+            x_reg_graph_df, y_reg_graph_df, mode="Regression", output_dim=1, graph_layer=2, attention=8
+        )
+        test_transformer_agnn(
+            x_reg_graph_df, y_reg_graph_df, mode="Regression", output_dim=1, graph_layer=1, attention=0
+        )
+        test_transformer_agnn(
+            x_reg_graph_df, y_reg_graph_df, mode="Regression", output_dim=1, graph_layer=2, attention=0
         )
 
         test_mlp(X_reg2_df, y_reg2_series, mode="Regression", output_dim=2)
-        test_transformer(X_reg2_df, y_reg2_series, mode="Regression", output_dim=2)
-        test_mlp_agnn(x_reg2_graph_df, y_reg2_graph_df, mode="Regression", output_dim=2)
+        test_transformer(X_reg2_df, y_reg2_series,
+                         mode="Regression", output_dim=2)
+        test_mlp_agnn(x_reg2_graph_df, y_reg2_graph_df,
+                      mode="Regression", output_dim=2, graph_layer=1, attention=8)
+        test_mlp_agnn(x_reg2_graph_df, y_reg2_graph_df,
+                      mode="Regression", output_dim=2, graph_layer=2, attention=8)
+        test_mlp_agnn(x_reg2_graph_df, y_reg2_graph_df,
+                      mode="Regression", output_dim=2, graph_layer=1, attention=0)
+        test_mlp_agnn(x_reg2_graph_df, y_reg2_graph_df,
+                      mode="Regression", output_dim=2, graph_layer=2, attention=0)
         test_transformer_agnn(
-            x_reg2_graph_df, y_reg2_graph_df, mode="Regression", output_dim=2
+            x_reg2_graph_df, y_reg2_graph_df, mode="Regression", output_dim=2, graph_layer=1, attention=8
+        )
+        test_transformer_agnn(
+            x_reg2_graph_df, y_reg2_graph_df, mode="Regression", output_dim=2, graph_layer=2, attention=8
+        )
+        test_transformer_agnn(
+            x_reg2_graph_df, y_reg2_graph_df, mode="Regression", output_dim=2, graph_layer=1, attention=0
+        )
+        test_transformer_agnn(
+            x_reg2_graph_df, y_reg2_graph_df, mode="Regression", output_dim=2, graph_layer=2, attention=0
         )
 
-        test_mlp(X_class_2_df, y_class_2_series, mode="Classification", output_dim=2)
+        test_mlp(X_class_2_df, y_class_2_series,
+                 mode="Classification", output_dim=2)
         test_transformer(
             X_class_2_df, y_class_2_series, mode="Classification", output_dim=2
         )
         test_mlp_agnn(
-            x_class2_graph_df, y_class2_graph_df, mode="Classification", output_dim=2
+            x_class2_graph_df, y_class2_graph_df, mode="Classification", output_dim=2, graph_layer=1, attention=8
+        )
+        test_mlp_agnn(
+            x_class2_graph_df, y_class2_graph_df, mode="Classification", output_dim=2, graph_layer=2, attention=8
+        )
+        test_mlp_agnn(
+            x_class2_graph_df, y_class2_graph_df, mode="Classification", output_dim=2, graph_layer=1, attention=0
+        )
+        test_mlp_agnn(
+            x_class2_graph_df, y_class2_graph_df, mode="Classification", output_dim=2, graph_layer=2, attention=0
         )
         test_transformer_agnn(
-            x_class2_graph_df, y_class2_graph_df, mode="Classification", output_dim=2
+            x_class2_graph_df, y_class2_graph_df, mode="Classification", output_dim=2, graph_layer=1, attention=8
+        )
+        test_transformer_agnn(
+            x_class2_graph_df, y_class2_graph_df, mode="Classification", output_dim=2, graph_layer=2, attention=8
+        )
+        test_transformer_agnn(
+            x_class2_graph_df, y_class2_graph_df, mode="Classification", output_dim=2, graph_layer=1, attention=0
+        )
+        test_transformer_agnn(
+            x_class2_graph_df, y_class2_graph_df, mode="Classification", output_dim=2, graph_layer=2, attention=0
         )
 
-        test_mlp(X_class_3_df, y_class_3_series, mode="Classification", output_dim=3)
+        test_mlp(X_class_3_df, y_class_3_series,
+                 mode="Classification", output_dim=3)
         test_transformer(
             X_class_3_df, y_class_3_series, mode="Classification", output_dim=3
         )
         test_mlp_agnn(
-            x_class3_graph_df, y_class3_graph_df, mode="Classification", output_dim=3
+            x_class3_graph_df, y_class3_graph_df, mode="Classification", output_dim=3, graph_layer=1, attention=8
+        )
+        test_mlp_agnn(
+            x_class3_graph_df, y_class3_graph_df, mode="Classification", output_dim=3, graph_layer=2, attention=8
+        )
+        test_mlp_agnn(
+            x_class3_graph_df, y_class3_graph_df, mode="Classification", output_dim=3, graph_layer=1, attention=0
+        )
+        test_mlp_agnn(
+            x_class3_graph_df, y_class3_graph_df, mode="Classification", output_dim=3, graph_layer=2, attention=0
         )
         test_transformer_agnn(
-            x_class3_graph_df, y_class3_graph_df, mode="Classification", output_dim=3
+            x_class3_graph_df, y_class3_graph_df, mode="Classification", output_dim=3, graph_layer=1, attention=8
+        )
+        test_transformer_agnn(
+            x_class3_graph_df, y_class3_graph_df, mode="Classification", output_dim=3, graph_layer=2, attention=8
+        )
+        test_transformer_agnn(
+            x_class3_graph_df, y_class3_graph_df, mode="Classification", output_dim=3, graph_layer=1, attention=0
+        )
+        test_transformer_agnn(
+            x_class3_graph_df, y_class3_graph_df, mode="Classification", output_dim=3, graph_layer=2, attention=0
         )
 
         print("""FUNCTIONALITY TEST PASSED""")
@@ -199,6 +273,7 @@ def test_mlp(X, y, mode, output_dim):
         print(r2_score(y, model.predict(X)))
     else:
         print(accuracy_score(y, model.predict(X)))
+        assert len(model.predict_proba(X)) == len(X)
     print(f"===Evaluate MLP {mode} {output_dim} class/dim test Complete===")
     print()
 
@@ -250,25 +325,28 @@ def test_transformer(X, y, mode, output_dim):
         print(r2_score(y, model.predict(X)))
     else:
         print(accuracy_score(y, model.predict(X)))
-    print(f"===Evaluate Transformer {mode} {output_dim} class/dim test Complete===")
+        assert len(model.predict_proba(X)) == len(X)
+    print(
+        f"===Evaluate Transformer {mode} {output_dim} class/dim test Complete===")
     print()
 
 
-def test_mlp_agnn(X, y, mode, output_dim):
+def test_mlp_agnn(X, y, mode, output_dim, graph_layer, attention):
     import torch.nn as nn
     from PyTorch2Sklearn.MLP_AGNN import MLP_AGNN
     from PyTorch2Sklearn.utils.data import GraphDataFactory
     from sklearn.metrics import accuracy_score, r2_score
 
-    print(f"===Begin MLP_AGNN {mode} {output_dim} class/dim test===")
+    print(
+        f"===Begin MLP_AGNN {mode} {output_dim} class/dim {graph_layer} graph layers {attention} graph attention heads test===")
 
     print("===Initialise MLP_AGNN===")
     model = MLP_AGNN(
         hidden_dim=16,
         num_encoder_layers=1,
-        num_graph_layers=1,
+        num_graph_layers=graph_layer,
         num_decoder_layers=1,
-        graph_nhead=8,
+        graph_nhead=attention,
         dropout=0.1,
         batch_size=32,
         epochs=5,
@@ -303,20 +381,24 @@ def test_mlp_agnn(X, y, mode, output_dim):
     else:
         if len(target) == 1:
             print(accuracy_score(y[target[0]], model.predict(X)))
+
         else:
             print(accuracy_score(y[target], model.predict(X)))
-    print(f"===Evaluate MLP_AGNN {mode} {output_dim} class/dim test Complete===")
+        assert len(model.predict_proba(X)) == len(X)
+    print(
+        f"===Evaluate MLP_AGNN {mode} {output_dim} class/dim test {graph_layer} graph layers {attention} graph attention heads Complete===")
     print()
 
 
-def test_transformer_agnn(X, y, mode, output_dim):
+def test_transformer_agnn(X, y, mode, output_dim, graph_layer, attention):
 
     import torch.nn as nn
     from PyTorch2Sklearn.Transformer_AGNN import Transformer_AGNN
     from PyTorch2Sklearn.utils.data import GraphDataFactory
     from sklearn.metrics import accuracy_score, r2_score
 
-    print(f"===Begin Transformer {mode} {output_dim} class/dim test===")
+    print(
+        f"===Begin Transformer {mode} {output_dim} class/dim {graph_layer} graph layers {attention} graph attention heads test===")
 
     print("===Initialise Transformer===")
 
@@ -324,8 +406,8 @@ def test_transformer_agnn(X, y, mode, output_dim):
         hidden_dim=16,
         num_transformer_layers=1,
         num_mlp_layers=1,
-        num_graph_layers=1,
-        graph_nhead=8,
+        num_graph_layers=graph_layer,
+        graph_nhead=attention,
         dropout=0.1,
         batch_size=32,
         share_embedding_mlp=False,
@@ -364,8 +446,9 @@ def test_transformer_agnn(X, y, mode, output_dim):
             print(accuracy_score(y[target[0]], model.predict(X)))
         else:
             print(accuracy_score(y[target], model.predict(X)))
+        assert len(model.predict_proba(X)) == len(X)
     print(
-        f"===Evaluate Transformer_AGNN {mode} {output_dim} class/dim test Complete==="
+        f"===Evaluate Transformer_AGNN {mode} {output_dim} class/dim test {graph_layer} graph layers {attention} graph attention heads Complete==="
     )
     print()
 
