@@ -101,7 +101,8 @@ class MLP_AGNN(TorchToSklearn_GraphModel):
                     )
                 )
                 if self.CFG["batchnorm"]:
-                    layers.append(nn.BatchNorm1d(self.hidden_layer_size[i + 1]))
+                    layers.append(nn.BatchNorm1d(
+                        self.hidden_layer_size[i + 1]))
                 layers.append(nn.ReLU())
 
             self.encoder = nn.Sequential(*layers)
@@ -186,6 +187,3 @@ class MLP_AGNN(TorchToSklearn_GraphModel):
             "name": name,
         }
         super().__init__(self.CFG, name=self.CFG["name"])
-
-
-# TODO: Bottleneck, further_input
