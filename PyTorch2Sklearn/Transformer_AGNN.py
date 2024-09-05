@@ -25,7 +25,8 @@ class Transformer_AGNN(TorchToSklearn_GraphModel):
                     [
                         nn.Sequential(
                             LinearLayer(CFG, 1, hidden_dim, dropout),
-                            nn.BatchNorm1d(hidden_dim) if batchnorm else nn.Identity(),
+                            nn.BatchNorm1d(
+                                hidden_dim) if batchnorm else nn.Identity(),
                         )
                         for _ in range(CFG["input_dim"])
                     ]
@@ -36,13 +37,14 @@ class Transformer_AGNN(TorchToSklearn_GraphModel):
             if self.CFG["share_embedding_mlp"]:
                 # Apply the shared MLP layer to each feature separately
                 mlp_output = torch.stack(
-                    [self.shared_mlp(X[:, i : i + 1]) for i in range(X.size(1))],
+                    [self.shared_mlp(X[:, i: i + 1])
+                     for i in range(X.size(1))],
                     dim=1,
                 )
             else:
                 # Apply the MLP layer to each feature separately
                 mlp_output = torch.stack(
-                    [self.mlp[i](X[:, i : i + 1]) for i in range(X.size(1))], dim=1
+                    [self.mlp[i](X[:, i: i + 1]) for i in range(X.size(1))], dim=1
                 )
             return mlp_output
 
@@ -204,7 +206,8 @@ class Transformer_AGNN(TorchToSklearn_GraphModel):
                 # Add an extra hidden_dim vector (cls) to the front of mlp_output
                 mlp_output = torch.cat(
                     [
-                        torch.zeros(X.size(0), 1, self.CFG["hidden_dim"]).to(X.device),
+                        torch.zeros(X.size(0), 1, self.CFG["hidden_dim"]).to(
+                            X.device),
                         mlp_output,
                     ],
                     dim=1,
@@ -224,7 +227,6 @@ class Transformer_AGNN(TorchToSklearn_GraphModel):
                         dim=1,
                     )
                 )
-
             for layer in self.graph_layer:
                 x = layer(x, graph)
 
@@ -301,6 +303,3 @@ class Transformer_AGNN(TorchToSklearn_GraphModel):
         }
 
         super().__init__(self.CFG, name=self.CFG["name"])
-
-
-# TODO: Bottleneck, further_input
