@@ -530,13 +530,13 @@ class TorchToSklearn_GraphModel(object):
         with torch.no_grad():
             x_list = self.CFG["DataFactory"](
                 val_x, mode=self.CFG["mode"], CFG=self.CFG
-            ).squeeze(0)
+            )
 
             valid_pred_probs = []
 
             for mini_batch_number in range(len(x_list)):
                 x_batch = torch.FloatTensor(
-                    x_list[mini_batch_number]).to(self.device)
+                    x_list[mini_batch_number]).to(self.device).squeeze(0)
 
                 graph = (
                     (torch.ones(len(x_batch)).unsqueeze(0).T @
