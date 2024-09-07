@@ -12,11 +12,15 @@ Author GitHub: https://github.com/TGChenZP
 3. [Model Architectures](#model-architectures)
    - [PyTorch2Sklearn.MLP](#pytorch2sklearnmlp-source)
    - [PyTorch2Sklearn.Transformer](#pytorch2sklearntransformer-source)
+   - [PyTorch2Sklearn.MLP_AGNN](#pytorch2sklearnmlp_agnn-source)
+   - [PyTorch2Sklearn.Transformer_AGNN](#pytorch2sklearntransformer_agnn-source)
 4. [Methods](#methods-source)
 5. [Usage Examples](#usage-examples)
    - [Regression Example](#regression-example)
         - [MLP Regression Example](#mlp-regression-example)
         - [Transformer Regression Example](#transformer-regression-example)
+        - [MLP_AGNN Regression Example](#mlp_agnn-regression-example)
+        - [Transformer_AGNN Regression Example](#transformer_agnn-regression-example)
    - [Classification Example](#classification-example)
         - [MLP Classification Example](#mlp-classification-example)
         - [Transformer Classification Example](#transformer-classification-example)
@@ -38,7 +42,7 @@ pip install PyTorch2Sklearn
 ## PyTorch2Sklearn.MLP [[source]](https://github.com/TGChenZP/PyTorch2Sklearn/blob/main/PyTorch2Sklearn/MLP.py)
 
 ```python
-class PyTorch2Sklearn.MLP.MLP(input_dim, output_dim, hidden_layers, hidden_dim, dropout, mode, batch_size, epochs, loss, TabularDataFactory, TabularDataset, lr=1e-3, random_state=42, grad_clip=False, batch_norm=False, verbose=False, rootpath='./', name='MLP', **kwargs)
+class PyTorch2Sklearn.MLP.MLP(input_dim, output_dim, hidden_layers, hidden_dim, dropout, mode, batch_size, epochs, loss, TabularDataFactory, TabularDataset, lr=1e-3, random_state=42, grad_clip=False, batchnorm=False, verbose=False, rootpath='./', name='MLP', **kwargs)
 ```
 
 ### Parameters
@@ -46,7 +50,7 @@ class PyTorch2Sklearn.MLP.MLP(input_dim, output_dim, hidden_layers, hidden_dim, 
 |---------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `input_dim` (`int`)                               | The number of features in the input dataset.                                                                                                                           |
 | `output_dim` (`int`)                              | The number of output classes/regression output dimension.                                                                                                              |
-| `hidden_layers` (`int`)                           | The number of hidden layers in the MLP.                                                                                                                                |
+| `hidden_layers` (`int`)                           | The number of hidden layers in the MLP. If set to `0`, will shrink hidden layers at arithmetic differences from input_dim to output_dim                                                                                                                               |
 | `hidden_dim` (`int`)                              | The number of neurons in each hidden layer.                                                                                                                            |
 | `dropout` (`float`)                               | The dropout rate.                                                                                                                                                      |
 | `mode` (`str`)                                    | The mode of the model, either 'Regression' or 'Classification'.                                                                                                        |
@@ -97,6 +101,72 @@ class PyTorch2Sklearn.Transformer.Transformer(input_dim, output_dim, num_transfo
 | `verbose` (`bool`, optional, default=`False`)     | Whether to print the training progress.                                                                                                                                |
 | `rootpath` (`str`, optional, default=`./`)        | The root path for saving the model.                                                                                                                                    |
 | `name` (`str`, optional, default=`"Transformer"`) | The name of the model.                                                                                                                                                 |
+
+## PyTorch2Sklearn.MLP_AGNN [[source]](https://github.com/TGChenZP/PyTorch2Sklearn/blob/main/PyTorch2Sklearn/MLP_AGNN.py)
+
+```python
+class PyTorch2Sklearn.MLP_AGNN.MLP_AGNN(input_dim, output_dim, num_encoder_layers, num_graph_layers, num_decoder_layers, graph_nhead, hidden_dim, dropout, mode, epochs, loss, DataFactory, graph="J", lr=1e-3, random_state=42, grad_clip=False, batch_norm=False, verbose=False, rootpath='./', name='MLP_AGNN', **kwargs)
+```
+
+### Parameters
+| **Parameter & Type**                              | **Description**                                                                                                                                                        |
+|---------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `input_dim` (`int`)                               | The number of features in the input dataset.                                                                                                                           |
+| `output_dim` (`int`)                              | The number of output classes/regression output dimension.                                                                                                              |
+| `num_encoder_layers` (`int`)                          | The number of encoder mlp layers.                                                                                                                                              |
+| `num_decoder_layers` (`int`)                          | The number of decoder mlp layers.                                                                                                                                              |
+| `num_graph_layers` (`int`)                          | The number of graph layers.                                                                                                                                              |
+| `graph_nhead` (`int`)                          | The number of attention heads in graph attention layer.                                                                                                                                              |
+| `hidden_dim` (`int`)                              | The number of neurons in each hidden layer.                                                                                                                            |
+| `dropout` (`float`)                               | The dropout rate.                                                                                                                                                      |
+| `mode` (`str`)                                    | The mode of the model, either 'Regression' or 'Classification'.                                                                                                        |
+| `epochs` (`int`)                                  | The number of epochs.                                                                                                                                                  |
+| `lr` (`float`)                                    | The learning rate.                                                                                                                                                     |
+| `random_state` (`int`)                            | The random state. *(WARNING: complete reproducibility cannot be guaranteed even if set seed)*                                                                          |
+| `grad_clip` (`bool`, optional, default=`False`)   | Whether to use gradient clipping (to 2) to restrict gradients on each parameter.                                                                                       |
+| `batch_norm` (`bool`, optional, default=`False`)  | Whether to use batch normalization on each batch of data.                                                                                                              |
+| `loss` (`nn.LossFunctions`)                       | The loss function.                                                                                                                                                     |
+| `DataFactory` (`PyTorch2Sklearn.utils.data.GraphDataFactory`) | The graph data factory that transforms data from input format into the correct format for training.                                                            |
+| `graph` (optional, default = `"J"`) | if `"J"`, then every batch will be inferenced with graph = J (1T 1). Also accepts manually defined graph. |
+| `verbose` (`bool`, optional, default=`False`)     | Whether to print the training progress.                                                                                                                                |
+| `rootpath` (`str`, optional, default=`./`)        | The root path for saving the model.                                                                                                                                    |
+| `name` (`str`, optional, default=`"MLP_AGNN"`)         | The name of the model.                                                                                                                                                 |
+
+
+
+## PyTorch2Sklearn.Transformer_AGNN [[source]](https://github.com/TGChenZP/PyTorch2Sklearn/blob/main/PyTorch2Sklearn/Transformer_AGNN.py)
+
+```python
+class PyTorch2Sklearn.Transformer_AGNN.Transformer_AGNN(input_dim, output_dim, num_transformer_layers, num_graph_layers, num_mlp_layers, hidden_dim, dropout, nhead, graph_nhead, mode, epochs, loss, DataFactory, graph="J",  share_embedding_mlp=False, use_cls=False, dim_feedforward=None, lr=1e-3, random_state=42, grad_clip=False, batchnorm=False, verbose=False, rootpath='./', name='Transformer_AGNN', **kwargs)
+```
+
+### Parameters
+| **Parameter**                              | **Description**                                                                                                                                                        |
+|---------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `input_dim` (`int`)                               | The number of features in the input dataset.                                                                                                                           |
+| `output_dim` (`int`)                              | The number of output classes/regression output dimension.                                                                                                              |
+| `num_transformer_layers` (`int`)                  | The number of transformer layers.                                                                                                                                      |
+| `num_mlp_layers` (`int`)                          | The number of MLP layers.                                                                                                                                              |
+| `num_graph_layers` (`int`)                          | The number of graph layers.                                                                                                                                              |
+| `graph_nhead` (`int`)                          | The number of attention heads in graph attention layer.                                                                                                                                              |
+| `hidden_dim` (`int`)                              | The number of neurons in the hidden layers.                                                                                                                            |
+| `dropout` (`float`)                               | The dropout rate.                                                                                                                                                      |
+| `nhead` (`int`)                                   | The number of heads in the multiheadattention models.                                                                                                                  |
+| `mode` (`str`)                                    | The mode of the model, either 'Regression' or 'Classification'.                                                                                                        |
+| `epochs` (`int`)                                  | The number of epochs.                                                                                                                                                  |
+| `lr` (`float`)                                    | The learning rate.                                                                                                                                                     |
+| `random_state` (`int`)                            | The random state. *(WARNING: complete reproducibility cannot be guaranteed even if set seed)*                                                                          |
+| `grad_clip` (`bool`, optional, default=`False`)   | Whether to use gradient clipping (to 2) to restrict gradients on each parameter.                                                                                       |
+| `batch_norm` (`bool`, optional, default=`False`)  | Whether to use batch normalization on each batch of data.                                                                                                              |
+| `loss` (`nn.LossFunctions`)                       | The loss function.                                                                                                                                                     |
+| `DataFactory` (`PyTorch2Sklearn.utils.data.GraphDataFactory`) | The graph data factory that transforms data from input format into the correct format for training.                                                            |
+| `graph` (optional, default = `"J"`) | if `"J"`, then every batch will be inferenced with graph = J (1T 1). Also accepts manually defined graph. |
+| `share_embedding_mlp` (`bool`, optional, default=`False`)              | Whether to share the embedding layer in the MLP.                                                                                                                       |
+| `use_cls` (`bool`, optional, default=`False`)     | Whether to use the CLS token to feed into the decoder, or concatenate all vectors outputted in the final transformer layer.                                             |
+| `dim_feedforward` (`int`, optional, default=`None`) | The hidden dimension in the feedforward network.                                                                                                                       |
+| `verbose` (`bool`, optional, default=`False`)     | Whether to print the training progress.                                                                                                                                |
+| `rootpath` (`str`, optional, default=`./`)        | The root path for saving the model.                                                                                                                                    |
+| `name` (`str`, optional, default=`"Transformer"`) | The name of the model.                
 
 
 # Methods [[source]](https://github.com/TGChenZP/PyTorch2Sklearn/blob/main/PyTorch2Sklearn/__template__.py)
@@ -201,6 +271,111 @@ model.fit(X, y)
 print(r2_score(y, model.predict(X)))
 ```
 
+### *MLP_AGNN Regression Example*
+```python
+from sklearn.datasets import make_classification
+import pandas as pd
+import torch.nn as nn
+from PyTorch2Sklearn.MLP_AGNN import MLP_AGNN
+from PyTorch2Sklearn.utils.data import GraphDataFactory
+from sklearn.metrics import accuracy_score, r2_score
+
+# Create a regression dataset
+X_reg, y_reg = make_regression(
+    n_samples=100, n_features=5, noise=0.1, random_state=42
+)
+X_reg_df = pd.DataFrame(
+    X_reg, columns=[f"feature_{i+1}" for i in range(X_reg.shape[1])]
+)
+y_reg_series = pd.Series(y_reg, name="target")
+
+# must add idx to denote groups of data
+reg_graph_df = pd.concat([X_reg_df, y_reg_series], axis=1)
+reg_graph_df["idx"] = [i % 10 for i in range(100)]
+X = reg_graph_df.drop(columns=["target"])
+y = reg_graph_df[["idx", "target"]]
+
+model = MLP_AGNN(
+        hidden_dim=16,
+        num_encoder_layers=1,
+        num_graph_layers=1,
+        num_decoder_layers=1,
+        graph_nhead=8,
+        dropout=0.1,
+        epochs=5,
+        lr=1e-3,
+        batchnorm=False,
+        grad_clip=False,
+        random_state=42,
+        loss=nn.MSELoss(),
+        mode="Regression",
+        graph="J",
+        verbose=1,
+        DataFactory=GraphDataFactory,
+        rootpath="./",
+        output_dim=output_dim,
+        input_dim=5,
+    )
+
+model.fit(X, y)
+
+print(r2_score(y, model.predict(X)))
+```
+
+### *Transformer_AGNN Regression Example*
+```python
+from sklearn.datasets import make_classification
+import pandas as pd
+import torch.nn as nn
+from PyTorch2Sklearn.Transformer_AGNN import Transformer_AGNN
+from PyTorch2Sklearn.utils.data import GraphDataFactory
+from sklearn.metrics import accuracy_score, r2_score
+
+# Create a regression dataset
+X_reg, y_reg = make_regression(
+    n_samples=100, n_features=5, noise=0.1, random_state=42
+)
+X_reg_df = pd.DataFrame(
+    X_reg, columns=[f"feature_{i+1}" for i in range(X_reg.shape[1])]
+)
+y_reg_series = pd.Series(y_reg, name="target")
+
+# must add idx to denote groups of data
+reg_graph_df = pd.concat([X_reg_df, y_reg_series], axis=1)
+reg_graph_df["idx"] = [i % 10 for i in range(100)]
+X = reg_graph_df.drop(columns=["target"])
+y = reg_graph_df[["idx", "target"]]
+
+model = Transformer_AGNN(
+        hidden_dim=16,
+        num_transformer_layers=1,
+        num_mlp_layers=1,
+        num_graph_layers=1,
+        graph_nhead=8,
+        dropout=0.1,
+        share_embedding_mlp=False,
+        nhead=8,
+        use_cls=False,
+        epochs=5,
+        lr=1e-3,
+        graph="J",
+        batchnorm=False,
+        grad_clip=False,
+        random_state=42,
+        loss=nn.MSELoss(),
+        mode='Regression',
+        verbose=1,
+        DataFactory=GraphDataFactory,
+        rootpath="./",
+        output_dim=2,
+        input_dim=5,
+    )
+
+model.fit(X, y)
+
+print(r2_score(y, model.predict(X)))
+```
+
 ## *Classification Example*
 
 ### *MLP Classification Example*
@@ -249,7 +424,7 @@ print(r2_score(y, model.predict(X)))
 from sklearn.datasets import make_classification
 import pandas as pd
 import torch.nn as nn
-from PyTorch2Sklearn.MLP import MLP
+from PyTorch2Sklearn.Transformer import Transformer
 from PyTorch2Sklearn.utils.data import TabularDataFactory, TabularDataset
 from sklearn.metrics import accuracy_score, r2_score
 
