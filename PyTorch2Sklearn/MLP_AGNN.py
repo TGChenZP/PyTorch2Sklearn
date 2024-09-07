@@ -148,7 +148,6 @@ class MLP_AGNN(TorchToSklearn_GraphModel):
         hidden_dim: int,
         dropout: float,
         mode: str,
-        batch_size: int,
         epochs: int,
         loss,
         DataFactory,
@@ -159,7 +158,7 @@ class MLP_AGNN(TorchToSklearn_GraphModel):
         batchnorm: bool = False,
         verbose: bool = False,
         rootpath: str = "./",
-        name: str = "MLP",
+        name: str = "MLP_AGNN",
     ):
         """Initialize the MLP model"""
 
@@ -173,7 +172,6 @@ class MLP_AGNN(TorchToSklearn_GraphModel):
             "hidden_dim": hidden_dim,
             "dropout": dropout,
             "mode": mode,
-            "batch_size": batch_size,
             "epochs": epochs,
             "lr": lr,
             "random_state": random_state,

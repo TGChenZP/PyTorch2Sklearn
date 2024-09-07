@@ -254,7 +254,6 @@ class Transformer_AGNN(TorchToSklearn_GraphModel):
         nhead: int,
         graph_nhead: int,
         mode: str,
-        batch_size: int,
         epochs: int,
         loss,
         DataFactory,
@@ -268,7 +267,7 @@ class Transformer_AGNN(TorchToSklearn_GraphModel):
         batchnorm: bool = False,
         verbose: bool = False,
         rootpath: str = "./",
-        name: str = "Transformer",
+        name: str = "Transformer_AGNN",
     ):
         """Initialize the Transformer model"""
 
@@ -287,7 +286,6 @@ class Transformer_AGNN(TorchToSklearn_GraphModel):
             "use_cls": use_cls,
             "dropout": dropout,
             "mode": mode,
-            "batch_size": batch_size,
             "epochs": epochs,
             "lr": lr,
             "random_state": random_state,
