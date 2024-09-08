@@ -361,7 +361,7 @@ class TorchToSklearn_GraphModel(object):
                 self.encode_label_dict[y] for y in train_y[self.CFG["target"][0]].values
             ]
 
-        x_list, y_list = self.CFG["DataFactory"](
+        x_list, y_list = self.CFG["GraphDataFactory"](
             train_x, train_y, self.CFG["mode"], self.CFG
         )  # might want to do batch number as well
 
@@ -477,7 +477,7 @@ class TorchToSklearn_GraphModel(object):
 
         with torch.no_grad():
 
-            x_list = self.CFG["DataFactory"](
+            x_list = self.CFG["GraphDataFactory"](
                 val_x, mode=self.CFG["mode"], CFG=self.CFG
             )  # create the instances
 
@@ -528,7 +528,7 @@ class TorchToSklearn_GraphModel(object):
         self.model.eval()
 
         with torch.no_grad():
-            x_list = self.CFG["DataFactory"](
+            x_list = self.CFG["GraphDataFactory"](
                 val_x, mode=self.CFG["mode"], CFG=self.CFG
             )
 

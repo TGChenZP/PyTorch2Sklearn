@@ -126,7 +126,7 @@ class PyTorch2Sklearn.MLP_AGNN.MLP_AGNN(input_dim, output_dim, num_encoder_layer
 | `grad_clip` (`bool`, optional, default=`False`)   | Whether to use gradient clipping (to 2) to restrict gradients on each parameter.                                                                                       |
 | `batch_norm` (`bool`, optional, default=`False`)  | Whether to use batch normalization on each batch of data.                                                                                                              |
 | `loss` (`nn.LossFunctions`)                       | The loss function.                                                                                                                                                     |
-| `DataFactory` (`PyTorch2Sklearn.utils.data.GraphDataFactory`) | The graph data factory that transforms data from input format into the correct format for training.                                                            |
+| `GraphDataFactory` (`PyTorch2Sklearn.utils.data.GraphDataFactory`) | The graph data factory that transforms data from input format into the correct format for training.                                                            |
 | `graph` (optional, default = `"J"`) | if `"J"`, then every batch will be inferenced with graph = J (1T 1). Also accepts manually defined graph. |
 | `verbose` (`bool`, optional, default=`False`)     | Whether to print the training progress.                                                                                                                                |
 | `rootpath` (`str`, optional, default=`./`)        | The root path for saving the model.                                                                                                                                    |
@@ -159,7 +159,7 @@ class PyTorch2Sklearn.Transformer_AGNN.Transformer_AGNN(input_dim, output_dim, n
 | `grad_clip` (`bool`, optional, default=`False`)   | Whether to use gradient clipping (to 2) to restrict gradients on each parameter.                                                                                       |
 | `batch_norm` (`bool`, optional, default=`False`)  | Whether to use batch normalization on each batch of data.                                                                                                              |
 | `loss` (`nn.LossFunctions`)                       | The loss function.                                                                                                                                                     |
-| `DataFactory` (`PyTorch2Sklearn.utils.data.GraphDataFactory`) | The graph data factory that transforms data from input format into the correct format for training.                                                            |
+| `GraphDataFactory` (`PyTorch2Sklearn.utils.data.GraphDataFactory`) | The graph data factory that transforms data from input format into the correct format for training.                                                            |
 | `graph` (optional, default = `"J"`) | if `"J"`, then every batch will be inferenced with graph = J (1T 1). Also accepts manually defined graph. |
 | `share_embedding_mlp` (`bool`, optional, default=`False`)              | Whether to share the embedding layer in the MLP.                                                                                                                       |
 | `use_cls` (`bool`, optional, default=`False`)     | Whether to use the CLS token to feed into the decoder, or concatenate all vectors outputted in the final transformer layer.                                             |
@@ -311,7 +311,7 @@ model = MLP_AGNN(
         mode="Regression",
         graph="J",
         verbose=1,
-        DataFactory=GraphDataFactory,
+        GraphDataFactory=GraphDataFactory,
         rootpath="./",
         output_dim=output_dim,
         input_dim=5,
@@ -365,7 +365,7 @@ model = Transformer_AGNN(
         loss=nn.MSELoss(),
         mode='Regression',
         verbose=1,
-        DataFactory=GraphDataFactory,
+        GraphDataFactory=GraphDataFactory,
         rootpath="./",
         output_dim=2,
         input_dim=5,
