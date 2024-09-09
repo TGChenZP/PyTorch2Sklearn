@@ -399,9 +399,10 @@ class TorchToSklearn_GraphModel(object):
 
                     self.optimizer.zero_grad()
                     graph = (
-                        (torch.ones(len(y)).unsqueeze(0).T @
-                         torch.ones(len(y)).unsqueeze(0)).to(self.device)
+                        (torch.ones(len(X)).unsqueeze(0).T @
+                         torch.ones(len(X)).unsqueeze(0)).to(self.device)
                         if self.CFG["graph"] == "J"
+                        else (1/len(X) * torch.ones(len(X)).unsqueeze(0).T @ torch.ones(len(X)).unsqueeze(0)).to(self.device) if self.CFG["graph"] == "U"
                         else self.CFG["graph"].to(self.device)
                     )
                     pred = self.model(X, graph)
@@ -443,6 +444,7 @@ class TorchToSklearn_GraphModel(object):
                         (torch.ones(len(X)).unsqueeze(0).T @
                          torch.ones(len(X)).unsqueeze(0)).to(self.device)
                         if self.CFG["graph"] == "J"
+                        else (1/len(X) * torch.ones(len(X)).unsqueeze(0).T @ torch.ones(len(X)).unsqueeze(0)).to(self.device) if self.CFG["graph"] == "U"
                         else self.CFG["graph"].to(self.device)
                     )
                     pred = self.model(X, graph)
@@ -491,9 +493,10 @@ class TorchToSklearn_GraphModel(object):
                 )
 
                 graph = (
-                    (torch.ones(len(x_batch)).unsqueeze(0).T @
-                     torch.ones(len(x_batch)).unsqueeze(0)).to(self.device)
+                        (torch.ones(len(x_batch)).unsqueeze(0).T @
+                         torch.ones(len(x_batch)).unsqueeze(0)).to(self.device)
                     if self.CFG["graph"] == "J"
+                    else (1/len(x_batch) * torch.ones(len(x_batch)).unsqueeze(0).T @ torch.ones(len(x_batch)).unsqueeze(0)).to(self.device) if self.CFG["graph"] == "U"
                     else self.CFG["graph"].to(self.device)
                 )
 
@@ -540,8 +543,9 @@ class TorchToSklearn_GraphModel(object):
 
                 graph = (
                     (torch.ones(len(x_batch)).unsqueeze(0).T @
-                     torch.ones(len(x_batch)).unsqueeze(0)).to(self.device)
+                        torch.ones(len(x_batch)).unsqueeze(0)).to(self.device)
                     if self.CFG["graph"] == "J"
+                    else (1/len(x_batch) * torch.ones(len(x_batch)).unsqueeze(0).T @ torch.ones(len(x_batch)).unsqueeze(0)).to(self.device) if self.CFG["graph"] == "U"
                     else self.CFG["graph"].to(self.device)
                 )
 
