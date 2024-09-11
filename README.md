@@ -105,7 +105,7 @@ class PyTorch2Sklearn.Transformer.Transformer(input_dim, output_dim, num_transfo
 ## PyTorch2Sklearn.MLP_AGNN [[source]](https://github.com/TGChenZP/PyTorch2Sklearn/blob/main/PyTorch2Sklearn/MLP_AGNN.py)
 
 ```python
-class PyTorch2Sklearn.MLP_AGNN.MLP_AGNN(input_dim, output_dim, num_encoder_layers, num_graph_layers, num_decoder_layers, graph_nhead, hidden_dim, dropout, mode, epochs, loss, DataFactory, graph="J", lr=1e-3, random_state=42, grad_clip=False, batch_norm=False, verbose=False, rootpath='./', name='MLP_AGNN', **kwargs)
+class PyTorch2Sklearn.MLP_AGNN.MLP_AGNN(input_dim, output_dim, num_encoder_layers, num_graph_layers, num_decoder_layers, graph_nhead, hidden_dim, dropout, mode, epochs, loss, DataFactory, graph="J", graph_mode='pure', lr=1e-3, random_state=42, grad_clip=False, batch_norm=False, verbose=False, rootpath='./', name='MLP_AGNN', **kwargs)
 ```
 
 ### Parameters
@@ -128,6 +128,7 @@ class PyTorch2Sklearn.MLP_AGNN.MLP_AGNN(input_dim, output_dim, num_encoder_layer
 | `loss` (`nn.LossFunctions`)                       | The loss function.                                                                                                                                                     |
 | `GraphDataFactory` (`PyTorch2Sklearn.utils.data.GraphDataFactory`) | The graph data factory that transforms data from input format into the correct format for training.                                                            |
 | `graph` (optional, default = `"J"`) | if `"J"`, then every batch will be inferenced with graph = J (1T 1); if `"U"`, then every batch will be inferencd with uniform graph (1/n 1T 1). Also accepts manually defined graph. |
+| `graph_mode` (optional, default=`"pure"`) | if `"pure"`, just take graph embedding; if `"residual"` add encoder output and graph output together; if `"concat"` concat encoder output and graph output |
 | `verbose` (`bool`, optional, default=`False`)     | Whether to print the training progress.                                                                                                                                |
 | `rootpath` (`str`, optional, default=`./`)        | The root path for saving the model.                                                                                                                                    |
 | `name` (`str`, optional, default=`"MLP_AGNN"`)         | The name of the model.                                                                                                                                                 |
@@ -137,7 +138,7 @@ class PyTorch2Sklearn.MLP_AGNN.MLP_AGNN(input_dim, output_dim, num_encoder_layer
 ## PyTorch2Sklearn.Transformer_AGNN [[source]](https://github.com/TGChenZP/PyTorch2Sklearn/blob/main/PyTorch2Sklearn/Transformer_AGNN.py)
 
 ```python
-class PyTorch2Sklearn.Transformer_AGNN.Transformer_AGNN(input_dim, output_dim, num_transformer_layers, num_graph_layers, num_mlp_layers, hidden_dim, dropout, nhead, graph_nhead, mode, epochs, loss, DataFactory, graph="J",  share_embedding_mlp=False, use_cls=False, dim_feedforward=None, lr=1e-3, random_state=42, grad_clip=False, batchnorm=False, verbose=False, rootpath='./', name='Transformer_AGNN', **kwargs)
+class PyTorch2Sklearn.Transformer_AGNN.Transformer_AGNN(input_dim, output_dim, num_transformer_layers, num_graph_layers, num_mlp_layers, hidden_dim, dropout, nhead, graph_nhead, mode, epochs, loss, DataFactory, graph="J", graph_mode='pure', share_embedding_mlp=False, use_cls=False, dim_feedforward=None, lr=1e-3, random_state=42, grad_clip=False, batchnorm=False, verbose=False, rootpath='./', name='Transformer_AGNN', **kwargs)
 ```
 
 ### Parameters
@@ -161,6 +162,7 @@ class PyTorch2Sklearn.Transformer_AGNN.Transformer_AGNN(input_dim, output_dim, n
 | `loss` (`nn.LossFunctions`)                       | The loss function.                                                                                                                                                     |
 | `GraphDataFactory` (`PyTorch2Sklearn.utils.data.GraphDataFactory`) | The graph data factory that transforms data from input format into the correct format for training.                                                            |
 | `graph` (optional, default = `"J"`) | if `"J"`, then every batch will be inferenced with graph = J (1T 1); if `"U"`, then every batch will be inferencd with uniform graph (1/n 1T 1). Also accepts manually defined graph. |
+| `graph_mode` (optional, default=`"pure"`) | if `"pure"`, just take graph embedding; if `"residual"` add encoder output and graph output together; if `"concat"` concat encoder output and graph output |
 | `share_embedding_mlp` (`bool`, optional, default=`False`)              | Whether to share the embedding layer in the MLP.                                                                                                                       |
 | `use_cls` (`bool`, optional, default=`False`)     | Whether to use the CLS token to feed into the decoder, or concatenate all vectors outputted in the final transformer layer.                                             |
 | `dim_feedforward` (`int`, optional, default=`None`) | The hidden dimension in the feedforward network.                                                                                                                       |
@@ -310,6 +312,7 @@ model = MLP_AGNN(
         loss=nn.MSELoss(),
         mode="Regression",
         graph="J",
+        graph_mode='pure',
         verbose=1,
         GraphDataFactory=GraphDataFactory,
         rootpath="./",
@@ -359,6 +362,7 @@ model = Transformer_AGNN(
         epochs=5,
         lr=1e-3,
         graph="J",
+        graph_mode='pure',
         batchnorm=False,
         grad_clip=False,
         random_state=42,

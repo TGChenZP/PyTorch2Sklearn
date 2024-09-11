@@ -17,19 +17,49 @@ class MLP_AGNN(TorchToSklearn_GraphModel):
 
             mlp_layers = []
 
-            # Middle layers (if num_decoder_layers > 1)
-            for _ in range(CFG["num_decoder_layers"] - 1):
-                mlp_layers.append(
-                    LinearLayer(
-                        CFG,
-                        CFG["hidden_dim"],
-                        CFG["hidden_dim"],
-                        CFG["dropout"],
-                    )
-                )
+            if self.CFG['graph_mode'] == 'concat':
+                # Middle layers (if num_decoder_layers > 1)
+                for _ in range(CFG["num_decoder_layers"] - 1):
 
-            # Last layer
-            mlp_layers.append(nn.Linear(CFG["hidden_dim"], CFG["output_dim"]))
+                    if _ == 0:
+                        mlp_layers.append(
+                            LinearLayer(
+                                CFG,
+                                CFG["hidden_dim"] * 2,
+                                CFG["hidden_dim"],
+                                CFG["dropout"],
+                            )
+                        )
+                    else:
+                        mlp_layers.append(
+                            LinearLayer(
+                                CFG,
+                                CFG["hidden_dim"],
+                                CFG["hidden_dim"],
+                                CFG["dropout"],
+                            )
+                        )
+
+                # Last layer
+                mlp_layers.append(nn.Linear(CFG["hidden_dim"]*2, CFG["output_dim"])
+                                  if (CFG["graph_mode"] == 'concat' and CFG['num_decoder_layers'] == 1) else nn.Linear(CFG["hidden_dim"], CFG["output_dim"]))
+
+            else:
+                # Middle layers (if num_decoder_layers > 1)
+                for _ in range(CFG["num_decoder_layers"] - 1):
+
+                    mlp_layers.append(
+                        LinearLayer(
+                            CFG,
+                            CFG["hidden_dim"],
+                            CFG["hidden_dim"],
+                            CFG["dropout"],
+                        )
+                    )
+
+                # Last layer
+                mlp_layers.append(
+                    nn.Linear(CFG["hidden_dim"], CFG["output_dim"]))
 
             # Combine the layers into one sequential model
             self.out_mlp = nn.Sequential(*mlp_layers)
@@ -131,8 +161,16 @@ class MLP_AGNN(TorchToSklearn_GraphModel):
         def forward(self, X, graph):
 
             x = self.encoder(X)
+            if self.CFG['graph_mode'] in ['concat', 'residual']:
+                x_enc = x.clone()
             for layer in self.graph_layer:
                 x = layer(x, graph)
+
+            if self.CFG['graph_mode'] == 'concat':
+                x = torch.cat((x_enc, x), dim=1)
+            elif self.CFG['graph_mode'] == 'residual':
+                x = x + x_enc
+
             y = self.decoder(x)
 
             return y
@@ -152,6 +190,7 @@ class MLP_AGNN(TorchToSklearn_GraphModel):
         loss,
         GraphDataFactory,
         graph="J",
+        graph_mode: str = "pure",
         lr: float = 1e-3,
         random_state: int = 42,
         grad_clip: bool = False,
@@ -180,6 +219,7 @@ class MLP_AGNN(TorchToSklearn_GraphModel):
             "GraphDataFactory": GraphDataFactory,
             "loss": loss,
             "graph": graph,
+            "graph_mode": graph_mode,
             "verbose": verbose,
             "rootpath": rootpath,
             "name": name,
