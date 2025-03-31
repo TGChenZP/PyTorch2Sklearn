@@ -74,16 +74,20 @@ class TorchToSklearn_Model(object):
 
         self.model.train()
 
-        nan_in_train_x = train_x.isna().sum()
+        try:
+            nan_in_train_x = train_x.isna().sum()
 
-        if nan_in_train_x.any():
-            print("train_x contains NaN values in the following columns:")
-            print(nan_in_train_x[nan_in_train_x > 0])
+            if nan_in_train_x.any():
+                print("train_x contains NaN values in the following columns:")
+                print(nan_in_train_x[nan_in_train_x > 0])
 
-        nan_in_train_y = train_y.isna().sum()
-        if nan_in_train_y.any():
-            print("train_y contains NaN values in the following columns:")
-            print(nan_in_train_y[nan_in_train_y > 0])
+            nan_in_train_y = train_y.isna().sum()
+            if nan_in_train_y.any():
+                print("train_y contains NaN values in the following columns:")
+                print(nan_in_train_y[nan_in_train_y > 0])
+
+        except AttributeError:
+            print("train_x and train_y are not pandas dataframes, skipping NaN check")
 
         already_warned_nan_loss = False
 
