@@ -26,7 +26,7 @@ class CNN(TorchToSklearn_Model):
             )
 
             # Middle layers (if num_mlp_layers > 2)
-            for _ in range(CFG["num_mlp_layers"] - 2):
+            for _ in range(CFG["num_mlp_layers"] - 1):
                 mlp_layers.append(
                     LinearLayer(
                         CFG,
@@ -64,7 +64,7 @@ class CNN(TorchToSklearn_Model):
                     *list(self.encoder.children())[:-1])
 
             sample_input = torch.randn(
-                [1, self.CFG.input_shape[1], self.CFG.input_shape[2], self.CFG.input_shape[3]])
+                [1, self.CFG['input_shape'][1], self.CFG['input_shape'][2], self.CFG['input_shape'][3]])
             sample_output = self.encoder(sample_input)
 
             flatten_shape = np.prod(sample_output.shape[1:])
@@ -74,7 +74,7 @@ class CNN(TorchToSklearn_Model):
             for param in self.encoder.parameters():
                 param.requires_grad = not self.CFG['freeze_encoder']
 
-            self.out_mlp = self.DecoderMLP(
+            self.out_mlp = CNN.DecoderMLP(
                 self.CFG,
                 self.CFG['hidden_dim'],
                 self.CFG["dropout"],
@@ -84,7 +84,7 @@ class CNN(TorchToSklearn_Model):
 
             X_img = X_img.permute(0, 3, 1, 2)
 
-            X_img = self.encoder_left(X_img)
+            X_img = self.encoder(X_img)
 
             batch_size = X_img.size(0)
 
@@ -92,31 +92,30 @@ class CNN(TorchToSklearn_Model):
 
             X_img = self.transition(X_img)
 
-            for layer in self.mlp_left:
-                X_img = layer(X_img)
-
             y = self.out_mlp(X_img)
 
             return y
 
     def __init__(
         self,
-        input_dim: int,
+        input_shape: tuple,
         output_dim: int,
         hidden_dim: int,
         cnn_encoder: str,
         freeze_encoder: bool,
         pretrained: bool,
+        crop_pretrained_linear: bool,
         num_mlp_layers: int,
         dropout: float,
         mode: str,
         batch_size: int,
         epochs: int,
         loss,
-        TabularDataFactory,  # TODO
-        TabularDataset,  # TODO
+        TabularDataFactory,
+        TabularDataset,
         lr: float = 1e-3,
         random_state: int = 42,
+        batchnorm=False,
         grad_clip: bool = False,
         verbose: bool = False,
         rootpath: str = "./",
@@ -125,12 +124,13 @@ class CNN(TorchToSklearn_Model):
         """Initialize the CNN model"""
 
         self.CFG = {
-            "input_dim": input_dim,
+            "input_shape": input_shape,
             "output_dim": output_dim,
             "hidden_dim": hidden_dim,
             "cnn_encoder": cnn_encoder,
             "freeze_encoder": freeze_encoder,
             "pretrained": pretrained,
+            'crop_pretrained_linear': crop_pretrained_linear,
             "num_mlp_layers": num_mlp_layers,
             "dropout": dropout,
             "mode": mode,
@@ -138,6 +138,7 @@ class CNN(TorchToSklearn_Model):
             "epochs": epochs,
             "lr": lr,
             "random_state": random_state,
+            "batchnorm": batchnorm,
             "grad_clip": grad_clip,
             "loss": loss,
             "TabularDataFactory": TabularDataFactory,
