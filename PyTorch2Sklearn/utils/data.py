@@ -96,8 +96,10 @@ def GraphDataFactory(X, y=None, mode="Classification", CFG=None):
             encoder = OneHotEncoder(
                 sparse_output=False, categories="auto", handle_unknown="ignore"
             )
-            y = encoder.fit_transform(np.array(y[CFG["target"][0]]).reshape(-1, 1))
-            y = pd.DataFrame(y, columns=encoder.get_feature_names_out(["target"]))
+            y = encoder.fit_transform(
+                np.array(y[CFG["target"][0]]).reshape(-1, 1))
+            y = pd.DataFrame(
+                y, columns=encoder.get_feature_names_out(["target"]))
             y["idx"] = y_idx
             CFG["target"] = encoder.get_feature_names_out(["target"])
 
