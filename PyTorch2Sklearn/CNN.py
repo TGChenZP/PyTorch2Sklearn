@@ -64,7 +64,7 @@ class CNN(TorchToSklearn_Model):
                     *list(self.encoder.children())[:-1])
 
             sample_input = torch.randn(
-                [1, self.CFG['input_shape'][1], self.CFG['input_shape'][2], self.CFG['input_shape'][3]])
+                [1, self.CFG['input_c'], self.CFG['input_l'], self.CFG['input_w']])
             sample_output = self.encoder(sample_input)
 
             flatten_shape = np.prod(sample_output.shape[1:])
@@ -98,7 +98,6 @@ class CNN(TorchToSklearn_Model):
 
     def __init__(
         self,
-        input_shape: tuple,
         output_dim: int,
         hidden_dim: int,
         cnn_encoder: str,
@@ -120,11 +119,16 @@ class CNN(TorchToSklearn_Model):
         verbose: bool = False,
         rootpath: str = "./",
         name: str = "CNN",
+        input_l: int = 3,
+        input_w: int = 224,
+        input_c: int = 224,
     ):
         """Initialize the CNN model"""
 
         self.CFG = {
-            "input_shape": input_shape,
+            "input_l": input_l,
+            "input_w": input_w,
+            "input_c": input_c,
             "output_dim": output_dim,
             "hidden_dim": hidden_dim,
             "cnn_encoder": cnn_encoder,
