@@ -63,6 +63,38 @@ def TabularDataFactory(X, y=None, mode="Classification"):
         return X.tolist(), y.tolist()
 
 
+class ImageDataset(Dataset):
+    """Creates list of instances for tabular data from pandas dataframe"""
+
+    def __init__(self, x_list, y_list=None):
+        """
+
+        Input:
+            - x_list: list of features
+            - y_list: list of targets
+
+        """
+
+        self.features = torch.tensor(np.array(x_list), dtype=torch.uint8)
+        self.targets = (
+            torch.tensor(np.array(y_list), dtype=torch.float32)
+            if y_list is not None
+            else None
+        )
+
+    def __len__(self):
+        return len(self.features)
+
+    def __getitem__(self, idx):
+
+        # Normalize and convert to float
+        x = self.features[idx].float() / 255.0
+        if self.targets is not None:
+            return x, self.targets[idx]
+        else:
+            return x
+
+
 def GraphDataFactory(X, y=None, mode="Classification", CFG=None):
     """
     Creates list of instances for tabular data from pandas dataframe
