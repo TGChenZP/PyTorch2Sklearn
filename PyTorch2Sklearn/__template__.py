@@ -87,7 +87,9 @@ class TorchToSklearn_Model(object):
                 print(nan_in_train_y[nan_in_train_y > 0])
 
         except AttributeError:
-            print("train_x and train_y are not pandas dataframes, skipping NaN check")
+            if self.CFG['verbose']:
+                print(
+                    "train_x and train_y are not pandas dataframes, skipping NaN check")
 
         already_warned_nan_loss = False
 
