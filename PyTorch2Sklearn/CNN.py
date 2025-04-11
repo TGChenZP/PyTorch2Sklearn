@@ -57,7 +57,59 @@ class CNN(TorchToSklearn_Model):
             torch.manual_seed(self.CFG["random_state"])
 
             self.encoder = torch.hub.load('pytorch/vision:v0.10.0', self.CFG['cnn_encoder'], pretrained=self.CFG['pretrained']) if type(
-                self.CFG['cnn_encoder']) == str else self.CFG['cnn_encoder']  # TODO
+                self.CFG['cnn_encoder']) == str else self.CFG['cnn_encoder']
+
+            if self.CFG['input_c'] == 1:
+                def adapt_first_conv(conv_layer):
+                    new_conv = nn.Conv2d(
+                        in_channels=1,
+                        out_channels=conv_layer.out_channels,
+                        kernel_size=conv_layer.kernel_size,
+                        stride=conv_layer.stride,
+                        padding=conv_layer.padding,
+                        bias=(conv_layer.bias is not None)
+                    )
+                    with torch.no_grad():
+                        new_conv.weight[:] = conv_layer.weight.mean(
+                            dim=1, keepdim=True)
+                        if conv_layer.bias is not None:
+                            new_conv.bias[:] = conv_layer.bias
+                    return new_conv
+
+                cnn_name = self.CFG['cnn_encoder']
+                if isinstance(cnn_name, str):
+                    cnn_name = cnn_name.lower()
+                    if 'densenet' in cnn_name:
+                        self.encoder.features.conv0 = adapt_first_conv(
+                            self.encoder.features.conv0)
+
+                    elif any(x in cnn_name for x in ['alexnet', 'squeezenet', 'vgg']):
+                        self.encoder.features[0] = adapt_first_conv(
+                            self.encoder.features[0])
+
+                    elif 'googlenet' in cnn_name or 'inception_v1' in cnn_name:
+                        self.encoder.conv1.conv = adapt_first_conv(
+                            self.encoder.conv1.conv)
+
+                    elif any(x in cnn_name for x in ['mnasnet']):
+                        self.encoder.layers[0] = adapt_first_conv(
+                            self.encoder.layers[0])
+
+                    elif any(x in cnn_name for x in ['resnet', 'resnext']):
+                        self.encoder.conv1 = adapt_first_conv(
+                            self.encoder.conv1)
+                    elif any(x in cnn_name for x in ['shufflenet']):
+                        self.encoder.conv1[0] = adapt_first_conv(
+                            self.encoder.conv1[0])
+                    elif any(x in cnn_name for x in ['mobilenet']):
+                        self.encoder.features[0][0] = adapt_first_conv(
+                            self.encoder.features[0][0])
+                    else:
+                        print(
+                            "WARNING: First conv layer not patched — unknown model type:", cnn_name)
+                else:
+                    print(
+                        "WARNING: cnn_encoder is not a string — cannot infer model type.")
 
             if self.CFG['crop_pretrained_linear']:
                 self.encoder = nn.Sequential(
@@ -81,8 +133,6 @@ class CNN(TorchToSklearn_Model):
             )
 
         def forward(self, X_img):
-
-            X_img = X_img.permute(0, 3, 1, 2)
 
             X_img = self.encoder(X_img)
 
