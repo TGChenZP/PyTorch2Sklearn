@@ -88,11 +88,75 @@ class ImageDataset(Dataset):
     def __getitem__(self, idx):
 
         # Normalize and convert to float
+
         x = self.features[idx].float() / 255.0
         if self.targets is not None:
             return x, self.targets[idx]
         else:
             return x
+
+
+class TabularImageDataset(Dataset):
+    """Creates list of instances for tabular data from pandas dataframe"""
+
+    def __init__(self, x_list, y_list=None):
+        """
+
+        Input:
+            - x_list: list of features
+            - y_list: list of targets
+
+        """
+
+        self.features = torch.tensor(np.array(x_list[0]), dtype=torch.float32)
+        self.images = torch.tensor(np.array(x_list[1]), dtype=torch.uint8)
+        self.targets = (
+            torch.tensor(np.array(y_list), dtype=torch.float32)
+            if y_list is not None
+            else None
+        )
+
+    def __len__(self):
+        return len(self.features)
+
+    def __getitem__(self, idx):
+        if self.targets is not None:
+            return self.features[idx], self.images[idx].float() / 255.0, self.targets[idx]
+        else:
+            return self.features[idx], self.images[idx].float() / 255.0
+
+
+def TabularImageDataFactory(X, y=None, mode="Classification"):
+    """
+    Creates list of instances for tabular data from pandas dataframe
+
+    Input:
+        - X: pandas dataframe containing features
+        - y: pandas series containing targets
+        - mode: 'Classification' or 'Regression'
+    Output:
+        - X_list: list of instances
+        - y_list: list of targets
+    """
+
+    if y is None:
+        if type(X[0]) != np.ndarray:
+            X_tabular = X[0].values
+        return [X_tabular.tolist(), X[1]]
+    else:
+        if mode == "Classification":
+            # need to change to multi-class probability vector for classification
+            encoder = OneHotEncoder(
+                sparse_output=False, categories="auto", handle_unknown="ignore"
+            )
+            y = encoder.fit_transform(np.array(y).reshape(-1, 1))
+
+        if type(X[0]) != np.ndarray:
+            X_tabular = X[0].values
+        if type(y) != np.ndarray:
+            y = y.values
+
+        return [X_tabular.tolist(), X[1]], y.tolist()
 
 
 def GraphDataFactory(X, y=None, mode="Classification", CFG=None):
@@ -153,7 +217,7 @@ def GraphDataFactory(X, y=None, mode="Classification", CFG=None):
         return X_list, y_list
 
 
-def ImageGraphDataFactory(X, X_images, y=None, mode="Classification", CFG=None):
+def ImageGraphDataFactory(X, y=None, mode="Classification", CFG=None):
     """
     Creates list of instances for tabular data from pandas dataframe
 
@@ -174,13 +238,13 @@ def ImageGraphDataFactory(X, X_images, y=None, mode="Classification", CFG=None):
     if y is None:
 
         # group the data based on idx
-        for idx, group_x in X.groupby("idx"):
+        for idx, group_x in X[0].groupby("idx"):
             group_x = group_x.drop("idx", axis=1)
             if type(group_x) != np.ndarray:
                 group_x = group_x.values
             X_list.append([group_x])
 
-            X_images_list.append(X_images[idx])
+            X_images_list.append(X[1][str(idx)])
 
         return X_list, X_images_list
     else:
@@ -197,12 +261,12 @@ def ImageGraphDataFactory(X, X_images, y=None, mode="Classification", CFG=None):
             y["idx"] = y_idx
             CFG["target"] = encoder.get_feature_names_out(["target"])
 
-        for idx, group_x in X.groupby("idx"):
+        for idx, group_x in X[0].groupby("idx"):
             group_x = group_x.drop("idx", axis=1)
             if type(group_x) != np.ndarray:
                 group_x = group_x.values
             X_list.append([group_x])
-            X_images_list.append(X_images[idx])
+            X_images_list.append(X[1][str(idx)])
 
             if len(CFG["target"]) == 1:
                 group_y = y[y["idx"] == idx][CFG["target"][0]]

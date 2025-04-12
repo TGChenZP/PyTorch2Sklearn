@@ -1,0 +1,441 @@
+from PyTorch2Sklearn.__template__ import TorchToSklearn_GraphModel
+from PyTorch2Sklearn.Modules import *
+
+
+class Transformer_CNN_AGNN(TorchToSklearn_GraphModel):
+    """Encoder only transformer Classifier or Regressor that can be used as a sklearn model"""
+
+    class MLPPerFeature(nn.Module):
+        """Feature Embedding Layer for input of each feature scalar: Linear -> ReLU -> Dropout"""
+
+        def __init__(self, CFG, hidden_dim, dropout, batchnorm):
+            super(Transformer_CNN_AGNN.MLPPerFeature, self).__init__()
+
+            torch.manual_seed(CFG["random_state"])
+
+            self.CFG = CFG
+
+            if CFG["share_embedding_mlp"]:
+                self.shared_mlp = nn.Sequential(
+                    LinearLayer(CFG, 1, hidden_dim, dropout),
+                    nn.BatchNorm1d(hidden_dim) if batchnorm else nn.Identity(),
+                )
+            else:
+                self.mlp = nn.ModuleList(
+                    [
+                        nn.Sequential(
+                            LinearLayer(CFG, 1, hidden_dim, dropout),
+                            nn.BatchNorm1d(
+                                hidden_dim) if batchnorm else nn.Identity(),
+                        )
+                        for _ in range(CFG["input_dim"])
+                    ]
+                )
+
+        def forward(self, X):
+
+            if self.CFG["share_embedding_mlp"]:
+                # Apply the shared MLP layer to each feature separately
+                mlp_output = torch.stack(
+                    [self.shared_mlp(X[:, i: i + 1])
+                     for i in range(X.size(1))],
+                    dim=1,
+                )
+            else:
+                # Apply the MLP layer to each feature separately
+                mlp_output = torch.stack(
+                    [self.mlp[i](X[:, i: i + 1]) for i in range(X.size(1))], dim=1
+                )
+            return mlp_output
+
+    class TransformerBlock(nn.Module):
+        def __init__(
+            self,
+            CFG,
+            hidden_dim,
+            nhead,
+            dim_feedforward,
+            dropout,
+            num_transformer_layers,
+        ):
+            super(Transformer_CNN_AGNN.TransformerBlock, self).__init__()
+
+            torch.manual_seed(CFG["random_state"])
+
+            self.transformer = nn.TransformerEncoder(
+                encoder_layer=nn.TransformerEncoderLayer(
+                    d_model=hidden_dim,
+                    nhead=nhead,
+                    # usually 4x hidden_dim, but we set to be tune-able
+                    dim_feedforward=dim_feedforward,
+                    dropout=dropout,
+                ),
+                num_layers=num_transformer_layers,
+            )
+
+            self._init_weights()
+
+        def _init_weights(self):
+            """Function for initialising weights"""
+            for p in self.parameters():
+                if p.dim() > 1:
+                    init.normal_(p, mean=0, std=0.01)
+
+        def forward(self, X):
+            # Reshape the tensor to have each feature as a separate sequence
+            reshaped_input = X.view(X.size(0), X.size(1), -1)
+
+            transformer_output = self.transformer(reshaped_input)
+
+            return transformer_output
+
+    class DecoderMLP(nn.Module):
+        """MLP layers as decoder: Linear -> ReLU -> Dropout (last layer is Linear)"""
+
+        def __init__(self, CFG, hidden_dim, dropout, batchnorm):
+            super(Transformer_CNN_AGNN.DecoderMLP, self).__init__()
+
+            torch.manual_seed(CFG["random_state"])
+
+            self.CFG = CFG
+
+            mlp_layers = []
+
+            if self.CFG['graph_mode'] == 'concat':
+                # Middle layers (if num_mlp_layers > 1)
+                for _ in range(CFG["num_mlp_layers"] - 1):
+
+                    if _ == 0:
+                        mlp_layers.append(
+                            LinearLayer(
+                                CFG,
+                                CFG["hidden_dim"] * 2,
+                                CFG["hidden_dim"],
+                                CFG["dropout"],
+                            )
+                        )
+                    else:
+                        mlp_layers.append(
+                            LinearLayer(
+                                CFG,
+                                CFG["hidden_dim"],
+                                CFG["hidden_dim"],
+                                CFG["dropout"],
+                            )
+                        )
+
+                # Last layer
+                mlp_layers.append(nn.Linear(CFG["hidden_dim"]*2, CFG["output_dim"])
+                                  if (CFG["graph_mode"] == 'concat' and CFG["num_mlp_layers"] == 1) else nn.Linear(CFG["hidden_dim"], CFG["output_dim"]))
+
+            else:
+                # Middle layers (if num_mlp_layers > 1)
+                for _ in range(CFG["num_mlp_layers"] - 1):
+
+                    mlp_layers.append(
+                        LinearLayer(
+                            CFG,
+                            CFG["hidden_dim"],
+                            CFG["hidden_dim"],
+                            CFG["dropout"],
+                        )
+                    )
+
+                # Last layer
+                mlp_layers.append(
+                    nn.Linear(CFG["hidden_dim"], CFG["output_dim"]))
+
+            # Combine the layers into one sequential model
+            self.out_mlp = nn.Sequential(*mlp_layers)
+
+        def forward(self, X):
+
+            return self.out_mlp(X)
+
+    class ProjectionMLP(nn.Module):
+        """MLP layers as decoder: Linear -> Dropout"""
+
+        def __init__(self, CFG, hidden_dim, dropout, batchnorm):
+            super(Transformer_CNN_AGNN.ProjectionMLP, self).__init__()
+
+            torch.manual_seed(CFG["random_state"])
+
+            self.CFG = CFG
+
+            mlp_layers = []
+
+            if CFG["use_cls"]:
+                input_dim = CFG["hidden_dim"] * (2 if CFG['cnn_concat'] else 1)
+            else:
+                input_dim = (CFG["input_dim"]+1 if CFG['cnn_concat']
+                             else CFG["input_dim"]) * CFG["hidden_dim"]
+
+            # First layer
+            mlp_layers.append(
+                LinearLayer(CFG, input_dim, CFG["hidden_dim"], CFG["dropout"])
+            )
+
+            # Combine the layers into one sequential model
+            self.out_mlp = nn.Sequential(*mlp_layers)
+
+        def forward(self, X):
+
+            return self.out_mlp(X)
+
+    class Model(nn.Module):
+        def __init__(self, CFG):
+            super().__init__()
+            self.CFG = CFG
+
+            # run warnings
+            self._warning()
+
+            assert not (self.CFG['freeze_encoder'] and not self.CFG['pretrained']
+                        ), "If encoder is frozen, it must be pretrained"
+
+            self.CNN_encoder = torch.hub.load('pytorch/vision:v0.10.0', self.CFG['cnn_encoder'], pretrained=self.CFG['pretrained']) if type(
+                self.CFG['cnn_encoder']) == str else self.CFG['cnn_encoder']
+
+            if self.CFG['input_c'] == 1:
+                def adapt_first_conv(conv_layer):
+                    new_conv = nn.Conv2d(
+                        in_channels=1,
+                        out_channels=conv_layer.out_channels,
+                        kernel_size=conv_layer.kernel_size,
+                        stride=conv_layer.stride,
+                        padding=conv_layer.padding,
+                        bias=(conv_layer.bias is not None)
+                    )
+                    with torch.no_grad():
+                        new_conv.weight[:] = conv_layer.weight.mean(
+                            dim=1, keepdim=True)
+                        if conv_layer.bias is not None:
+                            new_conv.bias[:] = conv_layer.bias
+                    return new_conv
+
+                cnn_name = self.CFG['cnn_encoder']
+                if isinstance(cnn_name, str):
+                    cnn_name = cnn_name.lower()
+                    if 'densenet' in cnn_name:
+                        self.CNN_encoder.features.conv0 = adapt_first_conv(
+                            self.CNN_encoder.features.conv0)
+
+                    elif any(x in cnn_name for x in ['alexnet', 'squeezenet', 'vgg']):
+                        self.CNN_encoder.features[0] = adapt_first_conv(
+                            self.CNN_encoder.features[0])
+
+                    elif 'googlenet' in cnn_name or 'inception_v1' in cnn_name:
+                        self.CNN_encoder.conv1.conv = adapt_first_conv(
+                            self.CNN_encoder.conv1.conv)
+
+                    elif any(x in cnn_name for x in ['mnasnet']):
+                        self.CNN_encoder.layers[0] = adapt_first_conv(
+                            self.CNN_encoder.layers[0])
+
+                    elif any(x in cnn_name for x in ['resnet', 'resnext']):
+                        self.CNN_encoder.conv1 = adapt_first_conv(
+                            self.CNN_encoder.conv1)
+                    elif any(x in cnn_name for x in ['shufflenet']):
+                        self.CNN_encoder.conv1[0] = adapt_first_conv(
+                            self.CNN_encoder.conv1[0])
+                    elif any(x in cnn_name for x in ['mobilenet']):
+                        self.CNN_encoder.features[0][0] = adapt_first_conv(
+                            self.CNN_encoder.features[0][0])
+                    else:
+                        print(
+                            "WARNING: First conv layer not patched — unknown model type:", cnn_name)
+                else:
+                    print(
+                        "WARNING: cnn_encoder is not a string — cannot infer model type.")
+
+            if self.CFG['crop_pretrained_linear']:
+                self.CNN_encoder = nn.Sequential(
+                    *list(self.CNN_encoder.children())[:-1])
+
+            sample_input = torch.randn(
+                [1, self.CFG['input_c'], self.CFG['input_l'], self.CFG['input_w']])
+            sample_output = self.CNN_encoder(sample_input)
+
+            flatten_shape = np.prod(sample_output.shape[1:])
+
+            # Transition layer to match the hidden_dim
+            self.transition = nn.Linear(flatten_shape, self.CFG['hidden_dim'])
+
+            for param in self.CNN_encoder.parameters():
+                param.requires_grad = not self.CFG['freeze_encoder']
+
+            # MLP layer for each feature
+            self.mlp_per_feature = Transformer_CNN_AGNN.MLPPerFeature(
+                CFG, CFG["hidden_dim"], CFG["dropout"], CFG["batchnorm"]
+            )
+
+            # Transformer block
+            self.transformer_block = Transformer_CNN_AGNN.TransformerBlock(
+                CFG,
+                CFG["hidden_dim"],
+                CFG["nhead"],
+                CFG["dim_feedforward"],
+                CFG["dropout"],
+                CFG["num_transformer_layers"],
+            )
+
+            # projects the transformer output to hidden_dim so graph layer can process it.
+            self.projection_mlp = Transformer_CNN_AGNN.ProjectionMLP(
+                CFG, CFG["hidden_dim"], CFG["dropout"], CFG["batchnorm"]
+            )
+
+            # Graph layers
+            if self.CFG["graph_nhead"] == 0:
+                self.graph_layer = nn.ModuleList(
+                    [GCN(CFG) for _ in range(CFG["num_graph_layers"])]
+                )
+            else:
+                self.graph_layer = nn.ModuleList(
+                    [
+                        A_GCN(CFG, CFG["graph_nhead"])
+                        for _ in range(CFG["num_graph_layers"])
+                    ]
+                )
+
+            # MLP layers as decoder
+            self.out_mlp = Transformer_CNN_AGNN.DecoderMLP(
+                CFG, CFG["hidden_dim"], CFG["dropout"], CFG["batchnorm"]
+            )
+
+        def forward(self, X, X_img, graph):
+
+            # Pass the image data through the CNN encoder# Process Image
+            X_img = self.CNN_encoder(X_img)
+
+            batch_size = X_img.size(0)
+
+            X_img = X_img.reshape(batch_size, -1)
+
+            X_img = self.transition(X_img)
+
+            # Forward pass through MLP layer for each feature
+            mlp_output = self.mlp_per_feature(X)
+
+            if self.CFG["use_cls"]:
+                # Add an extra hidden_dim vector (cls) to the front of mlp_output
+                mlp_output = torch.cat(
+                    [
+                        torch.zeros(X.size(0), 1, self.CFG["hidden_dim"]).to(
+                            X.device),
+                        mlp_output,
+                    ],
+                    dim=1,
+                )
+
+            transformer_output = self.transformer_block(mlp_output)
+
+            if self.CFG["use_cls"]:
+                x = self.projection_mlp(torch.cat(
+                    [transformer_output[:, 0, :], X_img]) if self.CFG['cnn_concat'] else transformer_output[:, 0, :])
+            else:
+                x = self.projection_mlp(
+                    torch.cat(
+                        [
+                            transformer_output[:, i, :]
+                            for i in range(transformer_output.size(1))
+                        ]+[X_img] if self.CFG['cnn_concat'] else [
+                            transformer_output[:, i, :]
+                            for i in range(transformer_output.size(1))
+                        ],
+                        dim=1,
+                    )
+                )
+
+            if self.CFG['graph_mode'] in ['concat', 'residual']:
+                x_enc = x.clone()
+            for layer in self.graph_layer:
+                x = layer(x, graph)
+
+            if self.CFG['graph_mode'] == 'concat':
+                x = torch.cat((x_enc, x), dim=1)
+            elif self.CFG['graph_mode'] == 'residual':
+                x = x + x_enc
+
+            y = self.out_mlp(x)
+
+            return y
+
+        def _warning(self):
+
+            if self.CFG["use_cls"] and self.CFG["num_transformer_layers"] == 1:
+                print(
+                    "Warning: Setting use_cls to True with num_transformer_layers=1 is not recommended."
+                    "The model will only be able to predict using the first feature token and will likely result in no learning/0R model"
+                )
+
+    def __init__(
+        self,
+        input_dim: int,
+        output_dim: int,
+        num_transformer_layers: int,
+        num_graph_layers: int,
+        num_mlp_layers: int,
+        hidden_dim: int,
+        dropout: float,
+        nhead: int,
+        graph_nhead: int,
+        mode: str,
+        epochs: int,
+        loss,
+        GraphImageDataFactory,
+        cnn_encoder: str,
+        freeze_encoder: bool,
+        pretrained: bool,
+        crop_pretrained_linear: bool,
+        graph="J",
+        graph_mode: str = "pure",
+        share_embedding_mlp: bool = False,
+        use_cls: bool = False,
+        cnn_concat: bool = False,
+        dim_feedforward: int = None,
+        lr: float = 1e-3,
+        random_state: int = 42,
+        grad_clip: bool = False,
+        batchnorm: bool = False,
+        verbose: bool = False,
+        rootpath: str = "./",
+        name: str = "Transformer_AGNN",
+    ):
+        """Initialize the Transformer model"""
+
+        dim_feedforward = 4 * hidden_dim if dim_feedforward is None else dim_feedforward
+
+        self.CFG = {
+            "input_dim": input_dim,
+            "output_dim": output_dim,
+            "num_transformer_layers": num_transformer_layers,
+            "num_graph_layers": num_graph_layers,
+            "num_mlp_layers": num_mlp_layers,
+            "hidden_dim": hidden_dim,
+            "dim_feedforward": dim_feedforward,
+            "cnn_concat": cnn_concat,
+            "cnn_encoder": cnn_encoder,
+            "freeze_encoder": freeze_encoder,
+            "pretrained": pretrained,
+            "crop_pretrained_linear": crop_pretrained_linear,
+            "nhead": nhead,
+            "graph_nhead": graph_nhead,
+            "use_cls": use_cls,
+            "dropout": dropout,
+            "mode": mode,
+            "epochs": epochs,
+            "lr": lr,
+            "random_state": random_state,
+            "grad_clip": grad_clip,
+            "batchnorm": batchnorm,
+            "loss": loss,
+            "GraphImageDataFactory": GraphImageDataFactory,
+            "graph": graph,
+            "graph_mode": graph_mode,
+            "verbose": verbose,
+            "rootpath": rootpath,
+            "share_embedding_mlp": share_embedding_mlp,
+            "name": name,
+        }
+
+        super().__init__(self.CFG, name=self.CFG["name"])
