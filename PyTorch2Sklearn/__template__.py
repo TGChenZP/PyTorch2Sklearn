@@ -340,15 +340,22 @@ class TorchToSklearn_GraphModel(object):
 
         self.model.train()
 
-        nan_in_train_x = train_x.isna().sum()
-        if nan_in_train_x.any():
-            print("train_x contains NaN values in the following columns:")
-            print(nan_in_train_x[nan_in_train_x > 0])
+        try:
+            nan_in_train_x = train_x.isna().sum()
 
-        nan_in_train_y = train_y.isna().sum()
-        if nan_in_train_y.any():
-            print("train_y contains NaN values in the following columns:")
-            print(nan_in_train_y[nan_in_train_y > 0])
+            if nan_in_train_x.any():
+                print("train_x contains NaN values in the following columns:")
+                print(nan_in_train_x[nan_in_train_x > 0])
+
+            nan_in_train_y = train_y.isna().sum()
+            if nan_in_train_y.any():
+                print("train_y contains NaN values in the following columns:")
+                print(nan_in_train_y[nan_in_train_y > 0])
+
+        except AttributeError:
+            if self.CFG['verbose']:
+                print(
+                    "train_x and train_y are not pandas dataframes, skipping NaN check")
 
         already_warned_nan_loss = False
         self.CFG["target"] = [
@@ -640,15 +647,22 @@ class TorchToSklearn_ImageGraphModel(object):
 
         self.model.train()
 
-        nan_in_train_x = train_x.isna().sum()
-        if nan_in_train_x.any():
-            print("train_x contains NaN values in the following columns:")
-            print(nan_in_train_x[nan_in_train_x > 0])
+        try:
+            nan_in_train_x = train_x.isna().sum()
 
-        nan_in_train_y = train_y.isna().sum()
-        if nan_in_train_y.any():
-            print("train_y contains NaN values in the following columns:")
-            print(nan_in_train_y[nan_in_train_y > 0])
+            if nan_in_train_x.any():
+                print("train_x contains NaN values in the following columns:")
+                print(nan_in_train_x[nan_in_train_x > 0])
+
+            nan_in_train_y = train_y.isna().sum()
+            if nan_in_train_y.any():
+                print("train_y contains NaN values in the following columns:")
+                print(nan_in_train_y[nan_in_train_y > 0])
+
+        except AttributeError:
+            if self.CFG['verbose']:
+                print(
+                    "train_x and train_y are not pandas dataframes, skipping NaN check")
 
         already_warned_nan_loss = False
         self.CFG["target"] = [
@@ -952,19 +966,24 @@ class TorchToSklearn_ImageTabularModel(object):
 
         self.model.train()
 
-        nan_in_train_x = train_x.isna().sum()
-        if nan_in_train_x.any():
-            print("train_x contains NaN values in the following columns:")
-            print(nan_in_train_x[nan_in_train_x > 0])
+        try:
+            nan_in_train_x = train_x.isna().sum()
 
-        nan_in_train_y = train_y.isna().sum()
-        if nan_in_train_y.any():
-            print("train_y contains NaN values in the following columns:")
-            print(nan_in_train_y[nan_in_train_y > 0])
+            if nan_in_train_x.any():
+                print("train_x contains NaN values in the following columns:")
+                print(nan_in_train_x[nan_in_train_x > 0])
+
+            nan_in_train_y = train_y.isna().sum()
+            if nan_in_train_y.any():
+                print("train_y contains NaN values in the following columns:")
+                print(nan_in_train_y[nan_in_train_y > 0])
+
+        except AttributeError:
+            if self.CFG['verbose']:
+                print(
+                    "train_x and train_y are not pandas dataframes, skipping NaN check")
 
         already_warned_nan_loss = False
-        self.CFG["target"] = [
-            column for column in train_y.columns if "idx" != column]
 
         # if classification turn labels into e.g. 0 1 2 3 so data factory can turn into probability vectors
         if self.CFG["mode"] == "Classification":
@@ -1010,14 +1029,8 @@ class TorchToSklearn_ImageTabularModel(object):
                         y = y.view(-1, self.CFG["output_dim"])
 
                     self.optimizer.zero_grad()
-                    graph = (
-                        (torch.ones(len(X)).unsqueeze(0).T @
-                         torch.ones(len(X)).unsqueeze(0)).to(self.device)
-                        if self.CFG["graph"] == "J"
-                        else (1/len(X) * torch.ones(len(X)).unsqueeze(0).T @ torch.ones(len(X)).unsqueeze(0)).to(self.device) if self.CFG["graph"] == "U"
-                        else self.CFG["graph"].to(self.device)
-                    )
-                    pred = self.model(X, X_images, graph)
+
+                    pred = self.model(X, X_images)
                     loss = self.criterion(pred.squeeze(0), y)
                     loss.backward()
                     if self.CFG["grad_clip"]:
@@ -1051,14 +1064,7 @@ class TorchToSklearn_ImageTabularModel(object):
 
                     self.optimizer.zero_grad()
 
-                    graph = (
-                        (torch.ones(len(X)).unsqueeze(0).T @
-                         torch.ones(len(X)).unsqueeze(0)).to(self.device)
-                        if self.CFG["graph"] == "J"
-                        else (1/len(X) * torch.ones(len(X)).unsqueeze(0).T @ torch.ones(len(X)).unsqueeze(0)).to(self.device) if self.CFG["graph"] == "U"
-                        else self.CFG["graph"].to(self.device)
-                    )
-                    pred = self.model(X, X_images, graph)
+                    pred = self.model(X, X_images)
 
                     loss = self.criterion(pred, y)
                     loss.backward()
@@ -1105,15 +1111,7 @@ class TorchToSklearn_ImageTabularModel(object):
                 x_batch, x_images_batch = batch[0].to(self.device), batch[1].to(
                     self.device)
 
-                graph = (
-                        (torch.ones(len(x_batch)).unsqueeze(0).T @
-                         torch.ones(len(x_batch)).unsqueeze(0)).to(self.device)
-                    if self.CFG["graph"] == "J"
-                    else (1/len(x_batch) * torch.ones(len(x_batch)).unsqueeze(0).T @ torch.ones(len(x_batch)).unsqueeze(0)).to(self.device) if self.CFG["graph"] == "U"
-                    else self.CFG["graph"].to(self.device)
-                )
-
-                pred = self.model(x_batch, x_images_batch, graph)
+                pred = self.model(x_batch, x_images_batch)
                 # if regression, squeeze the dimension, if classification, argmax.
                 predicted_labels = (
                     torch.argmax(pred, dim=1)
@@ -1156,16 +1154,9 @@ class TorchToSklearn_ImageTabularModel(object):
             for batch in val_dataloader:
                 x_batch, x_images_batch = batch[0].to(self.device), batch[1].to(
                     self.device)
-                graph = (
-                    (torch.ones(len(x_batch)).unsqueeze(0).T @
-                        torch.ones(len(x_batch)).unsqueeze(0)).to(self.device)
-                    if self.CFG["graph"] == "J"
-                    else (1/len(x_batch) * torch.ones(len(x_batch)).unsqueeze(0).T @ torch.ones(len(x_batch)).unsqueeze(0)).to(self.device) if self.CFG["graph"] == "U"
-                    else self.CFG["graph"].to(self.device)
-                )
 
                 pred_probs = self.model(
-                    x_batch, x_images_batch, graph).softmax(dim=1)
+                    x_batch, x_images_batch).softmax(dim=1)
                 valid_pred_probs.append(pred_probs.detach().cpu().numpy())
 
             valid_pred_probs = np.concatenate(valid_pred_probs, axis=0)

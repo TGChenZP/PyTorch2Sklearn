@@ -1,4 +1,3 @@
-# TODO: not a graph model
 from PyTorch2Sklearn.__template__ import TorchToSklearn_ImageTabularModel
 from PyTorch2Sklearn.Modules import *
 
@@ -104,9 +103,7 @@ class Transformer_CNN(TorchToSklearn_ImageTabularModel):
                 input_dim = CFG["hidden_dim"] * (2 if CFG['cnn_concat']
                                                  else 1)
             else:
-                input_dim = (CFG["input_dim"]+1 if CFG['cnn_concat']
-                             else CFG['input_dim']) * CFG["hidden_dim"]
-
+                input_dim = (CFG["input_dim"]+1) * CFG["hidden_dim"]
             # First layer
             mlp_layers.append(
                 LinearLayer(CFG, input_dim, CFG["hidden_dim"], CFG["dropout"])
@@ -260,7 +257,9 @@ class Transformer_CNN(TorchToSklearn_ImageTabularModel):
                     dim=1,
                 )
 
+            # concat before transformer, as don't want to concat after MLP
             if not self.CFG['cnn_concat']:
+                X_img = X_img.view(batch_size, 1, -1)
                 # Concatenate the output from the CNN and the MLP
                 mlp_output = torch.cat((mlp_output, X_img), dim=1)
 
@@ -268,8 +267,9 @@ class Transformer_CNN(TorchToSklearn_ImageTabularModel):
 
             if self.CFG["use_cls"]:  # predict just using cls
                 y = self.out_mlp(torch.cat(
-                    [transformer_output[:, 0, :], X_img]) if self.CFG['cnn_concat'] else transformer_output[:, 0, :])
+                    [transformer_output[:, 0, :], X_img], dim=1) if self.CFG['cnn_concat'] else transformer_output[:, 0, :])
             else:  # concatenate the output from all layers in transformer_output
+
                 y = self.out_mlp(
                     torch.cat(
                         [
@@ -323,6 +323,9 @@ class Transformer_CNN(TorchToSklearn_ImageTabularModel):
         verbose: bool = False,
         rootpath: str = "./",
         name: str = "Transformer",
+        input_l: int = 3,
+        input_w: int = 224,
+        input_c: int = 224,
     ):
         """Initialize the Transformer model"""
 
@@ -357,6 +360,9 @@ class Transformer_CNN(TorchToSklearn_ImageTabularModel):
             "rootpath": rootpath,
             "share_embedding_mlp": share_embedding_mlp,
             "name": name,
+            "input_l": input_l,
+            "input_w": input_w,
+            "input_c": input_c,
         }
 
         super().__init__(self.CFG, name=self.CFG["name"])
