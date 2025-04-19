@@ -1,8 +1,8 @@
-from PyTorch2Sklearn.__template__ import TorchToSklearn_GraphModel
+from PyTorch2Sklearn.__template__ import TorchToSklearn_ImageGraphModel
 from PyTorch2Sklearn.Modules import *
 
 
-class MLP_CNN_AGNN(TorchToSklearn_GraphModel):
+class MLP_CNN_AGNN(TorchToSklearn_ImageGraphModel):
     """MLP Classifier or Regressor that can be used as a sklearn model"""
 
     class DecoderMLP(nn.Module):
@@ -248,7 +248,7 @@ class MLP_CNN_AGNN(TorchToSklearn_GraphModel):
 
             x = self.encoder(X)
 
-            x = torch.cat((x, X_img), dim=1)
+            x = self.projection_mlp(torch.cat((x, X_img), dim=1))
 
             if self.CFG['graph_mode'] in ['concat', 'residual']:
                 x_enc = x.clone()
@@ -277,7 +277,7 @@ class MLP_CNN_AGNN(TorchToSklearn_GraphModel):
         mode: str,
         epochs: int,
         loss,
-        GraphImageDataFactory,
+        ImageGraphDataFactory,
         cnn_encoder: str,
         freeze_encoder: bool,
         pretrained: bool,
@@ -290,7 +290,10 @@ class MLP_CNN_AGNN(TorchToSklearn_GraphModel):
         batchnorm: bool = False,
         verbose: bool = False,
         rootpath: str = "./",
-        name: str = "MLP_AGNN",
+        name: str = "MLP_CNN_AGNN",
+        input_l: int = 3,
+        input_w: int = 224,
+        input_c: int = 224,
     ):
         """Initialize the MLP model"""
 
@@ -313,12 +316,15 @@ class MLP_CNN_AGNN(TorchToSklearn_GraphModel):
             "random_state": random_state,
             "grad_clip": grad_clip,
             "batchnorm": batchnorm,
-            "GraphImageDataFactory": GraphImageDataFactory,
+            "ImageGraphDataFactory": ImageGraphDataFactory,
             "loss": loss,
             "graph": graph,
             "graph_mode": graph_mode,
             "verbose": verbose,
             "rootpath": rootpath,
             "name": name,
+            "input_l": input_l,
+            "input_w": input_w,
+            "input_c": input_c,
         }
         super().__init__(self.CFG, name=self.CFG["name"])

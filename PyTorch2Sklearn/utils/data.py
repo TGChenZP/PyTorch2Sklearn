@@ -244,7 +244,7 @@ def ImageGraphDataFactory(X, y=None, mode="Classification", CFG=None):
                 group_x = group_x.values
             X_list.append([group_x])
 
-            X_images_list.append(X[1][str(idx)])
+            X_images_list.append(X[1][idx])
 
         return X_list, X_images_list
     else:
@@ -266,7 +266,7 @@ def ImageGraphDataFactory(X, y=None, mode="Classification", CFG=None):
             if type(group_x) != np.ndarray:
                 group_x = group_x.values
             X_list.append([group_x])
-            X_images_list.append(X[1][str(idx)])
+            X_images_list.append(X[1][idx])
 
             if len(CFG["target"]) == 1:
                 group_y = y[y["idx"] == idx][CFG["target"][0]]

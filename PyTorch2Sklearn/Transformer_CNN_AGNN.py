@@ -1,8 +1,8 @@
-from PyTorch2Sklearn.__template__ import TorchToSklearn_GraphModel
+from PyTorch2Sklearn.__template__ import TorchToSklearn_ImageGraphModel
 from PyTorch2Sklearn.Modules import *
 
 
-class Transformer_CNN_AGNN(TorchToSklearn_GraphModel):
+class Transformer_CNN_AGNN(TorchToSklearn_ImageGraphModel):
     """Encoder only transformer Classifier or Regressor that can be used as a sklearn model"""
 
     class MLPPerFeature(nn.Module):
@@ -167,8 +167,7 @@ class Transformer_CNN_AGNN(TorchToSklearn_GraphModel):
             if CFG["use_cls"]:
                 input_dim = CFG["hidden_dim"] * (2 if CFG['cnn_concat'] else 1)
             else:
-                input_dim = (CFG["input_dim"]+1 if CFG['cnn_concat']
-                             else CFG["input_dim"]) * CFG["hidden_dim"]
+                input_dim = (CFG["input_dim"]+1)*CFG['hidden_dim']
 
             # First layer
             mlp_layers.append(
@@ -327,11 +326,17 @@ class Transformer_CNN_AGNN(TorchToSklearn_GraphModel):
                     dim=1,
                 )
 
+            # concat before transformer, as don't want to concat after MLP
+            if not self.CFG['cnn_concat']:
+                X_img = X_img.view(batch_size, 1, -1)
+                # Concatenate the output from the CNN and the MLP
+                mlp_output = torch.cat((mlp_output, X_img), dim=1)
+
             transformer_output = self.transformer_block(mlp_output)
 
             if self.CFG["use_cls"]:
                 x = self.projection_mlp(torch.cat(
-                    [transformer_output[:, 0, :], X_img]) if self.CFG['cnn_concat'] else transformer_output[:, 0, :])
+                    [transformer_output[:, 0, :], X_img], dim=1) if self.CFG['cnn_concat'] else transformer_output[:, 0, :])
             else:
                 x = self.projection_mlp(
                     torch.cat(
@@ -382,7 +387,7 @@ class Transformer_CNN_AGNN(TorchToSklearn_GraphModel):
         mode: str,
         epochs: int,
         loss,
-        GraphImageDataFactory,
+        ImageGraphDataFactory,
         cnn_encoder: str,
         freeze_encoder: bool,
         pretrained: bool,
@@ -399,7 +404,10 @@ class Transformer_CNN_AGNN(TorchToSklearn_GraphModel):
         batchnorm: bool = False,
         verbose: bool = False,
         rootpath: str = "./",
-        name: str = "Transformer_AGNN",
+        name: str = "Transformer_CNN_AGNN",
+        input_l: int = 3,
+        input_w: int = 224,
+        input_c: int = 224,
     ):
         """Initialize the Transformer model"""
 
@@ -429,13 +437,16 @@ class Transformer_CNN_AGNN(TorchToSklearn_GraphModel):
             "grad_clip": grad_clip,
             "batchnorm": batchnorm,
             "loss": loss,
-            "GraphImageDataFactory": GraphImageDataFactory,
+            "ImageGraphDataFactory": ImageGraphDataFactory,
             "graph": graph,
             "graph_mode": graph_mode,
             "verbose": verbose,
             "rootpath": rootpath,
             "share_embedding_mlp": share_embedding_mlp,
             "name": name,
+            "input_l": input_l,
+            "input_w": input_w,
+            "input_c": input_c,
         }
 
         super().__init__(self.CFG, name=self.CFG["name"])
