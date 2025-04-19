@@ -193,8 +193,6 @@ class TorchToSklearn_Model(object):
 
         """
 
-        assert self._is_fitted, "model has not been fitted yet"
-
         self.model.eval()
 
         with torch.no_grad():
@@ -237,7 +235,6 @@ class TorchToSklearn_Model(object):
 
         """
 
-        assert self._is_fitted, "model has not been fitted yet"
         assert (
             self.CFG["mode"] == "Classification"
         ), "predict_proba is only available for classification tasks"
@@ -486,8 +483,6 @@ class TorchToSklearn_GraphModel(object):
 
         """
 
-        assert self._is_fitted, "model has not been fitted yet"
-
         self.model.eval()
 
         with torch.no_grad():
@@ -536,7 +531,6 @@ class TorchToSklearn_GraphModel(object):
 
         """
 
-        assert self._is_fitted, "model has not been fitted yet"
         assert (
             self.CFG["mode"] == "Classification"
         ), "predict_proba is only available for classification tasks"
@@ -704,10 +698,9 @@ class TorchToSklearn_ImageGraphModel(object):
                 for mini_batch_number in range(len(x_list)):
                     X, X_images, y = torch.FloatTensor(np.array(x_list[mini_batch_number])).to(
                         self.device
-                    ).squeeze(0), torch.FloatTensor(np.array(x_images_list[mini_batch_number]).float() / 255.0).to(
+                    ).squeeze(0), torch.FloatTensor(np.array(x_images_list[mini_batch_number], dtype=np.float32) / 255.0).to(
                         self.device
-                    ).squeeze(0),
-                    torch.FloatTensor(
+                    ).squeeze(0), torch.FloatTensor(
                         np.array(y_list[mini_batch_number])
                     ).to(
                         self.device
@@ -756,11 +749,9 @@ class TorchToSklearn_ImageGraphModel(object):
                 for mini_batch_number in range(len(x_list)):
                     X, X_images, y = torch.FloatTensor(x_list[mini_batch_number]).to(
                         self.device
-                    ),
-                    torch.FloatTensor(np.array(x_images_list[mini_batch_number]).float() / 255.0).to(
+                    ), torch.FloatTensor(np.array(x_images_list[mini_batch_number], dtype=np.float32) / 255.0).to(
                         self.device
-                    ),
-                    torch.FloatTensor(
+                    ), torch.FloatTensor(
                         y_list[mini_batch_number]).to(self.device)
 
                     # special case error handling: batchnorm needs more than 2 instances to be meaningful
@@ -805,8 +796,6 @@ class TorchToSklearn_ImageGraphModel(object):
 
         """
 
-        assert self._is_fitted, "model has not been fitted yet"
-
         self.model.eval()
 
         with torch.no_grad():
@@ -820,7 +809,8 @@ class TorchToSklearn_ImageGraphModel(object):
             for mini_batch_number in range(len(x_list)):
                 x_batch, x_images_batch = torch.FloatTensor(x_list[mini_batch_number]).to(self.device).squeeze(0), \
                     torch.FloatTensor(
-                        x_images_list[mini_batch_number].float() / 255.0
+                        x_images_list[mini_batch_number].astype(
+                            'float32') / 255.0
                 ).to(self.device).squeeze(0)
 
                 graph = (
@@ -854,7 +844,6 @@ class TorchToSklearn_ImageGraphModel(object):
 
         """
 
-        assert self._is_fitted, "model has not been fitted yet"
         assert (
             self.CFG["mode"] == "Classification"
         ), "predict_proba is only available for classification tasks"
@@ -870,7 +859,7 @@ class TorchToSklearn_ImageGraphModel(object):
 
             for mini_batch_number in range(len(x_list)):
                 x_batch, x_images_batch = torch.FloatTensor(
-                    x_list[mini_batch_number]).to(self.device).squeeze(0), torch.FloatTensor(x_images_list[mini_batch_number].float()/255.0).to(self.device).squeeze(0)
+                    x_list[mini_batch_number]).to(self.device).squeeze(0), torch.FloatTensor(x_images_list[mini_batch_number].astype('float32')/255.0).to(self.device).squeeze(0)
 
                 graph = (
                     (torch.ones(len(x_batch)).unsqueeze(0).T @
@@ -1090,8 +1079,6 @@ class TorchToSklearn_ImageTabularModel(object):
 
         """
 
-        assert self._is_fitted, "model has not been fitted yet"
-
         self.model.eval()
 
         with torch.no_grad():
@@ -1134,7 +1121,6 @@ class TorchToSklearn_ImageTabularModel(object):
 
         """
 
-        assert self._is_fitted, "model has not been fitted yet"
         assert (
             self.CFG["mode"] == "Classification"
         ), "predict_proba is only available for classification tasks"
