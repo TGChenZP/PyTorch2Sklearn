@@ -63,11 +63,13 @@ class MLP(TorchToSklearn_Model):
                     )
                 )
                 if self.CFG["batchnorm"]:
-                    layers.append(nn.BatchNorm1d(self.hidden_layer_size[i + 1]))
+                    layers.append(nn.BatchNorm1d(
+                        self.hidden_layer_size[i + 1]))
                 layers.append(nn.ReLU())
 
             # Output layer
-            layers.append(nn.Linear(self.hidden_layer_size[-1], self.CFG["output_dim"]))
+            layers.append(
+                nn.Linear(self.hidden_layer_size[-1], self.CFG["output_dim"]))
 
             self.full_model = nn.Sequential(*layers)
 
@@ -97,6 +99,7 @@ class MLP(TorchToSklearn_Model):
         verbose: bool = False,
         rootpath: str = "./",
         name: str = "MLP",
+        nan_break: bool = False,
     ):
         """Initialize the MLP model"""
 
@@ -119,5 +122,6 @@ class MLP(TorchToSklearn_Model):
             "verbose": verbose,
             "rootpath": rootpath,
             "name": name,
+            "nan_break": nan_break,
         }
         super().__init__(self.CFG, name=self.CFG["name"])

@@ -308,6 +308,7 @@ class Transformer_AGNN(TorchToSklearn_GraphModel):
         verbose: bool = False,
         rootpath: str = "./",
         name: str = "Transformer_AGNN",
+        nan_break: bool = False,
     ):
         """Initialize the Transformer model"""
 
@@ -339,6 +340,7 @@ class Transformer_AGNN(TorchToSklearn_GraphModel):
             "rootpath": rootpath,
             "share_embedding_mlp": share_embedding_mlp,
             "name": name,
+            'nan_break': nan_break,
         }
 
         super().__init__(self.CFG, name=self.CFG["name"])

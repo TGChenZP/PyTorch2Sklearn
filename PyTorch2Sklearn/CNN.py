@@ -172,6 +172,7 @@ class CNN(TorchToSklearn_Model):
         input_l: int = 3,
         input_w: int = 224,
         input_c: int = 224,
+        nan_break: bool = False,
     ):
         """Initialize the CNN model"""
 
@@ -179,6 +180,7 @@ class CNN(TorchToSklearn_Model):
             "input_l": input_l,
             "input_w": input_w,
             "input_c": input_c,
+            "nan_break": nan_break,
             "output_dim": output_dim,
             "hidden_dim": hidden_dim,
             "cnn_encoder": cnn_encoder,

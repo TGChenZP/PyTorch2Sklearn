@@ -198,6 +198,7 @@ class MLP_AGNN(TorchToSklearn_GraphModel):
         verbose: bool = False,
         rootpath: str = "./",
         name: str = "MLP_AGNN",
+        nan_break: bool = False,
     ):
         """Initialize the MLP model"""
 
@@ -223,5 +224,6 @@ class MLP_AGNN(TorchToSklearn_GraphModel):
             "verbose": verbose,
             "rootpath": rootpath,
             "name": name,
+            "nan_break": nan_break,
         }
         super().__init__(self.CFG, name=self.CFG["name"])

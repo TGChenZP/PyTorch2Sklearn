@@ -326,6 +326,7 @@ class Transformer_CNN(TorchToSklearn_ImageTabularModel):
         input_l: int = 3,
         input_w: int = 224,
         input_c: int = 224,
+        nan_break: bool = False,
     ):
         """Initialize the Transformer model"""
 
@@ -363,6 +364,7 @@ class Transformer_CNN(TorchToSklearn_ImageTabularModel):
             "input_l": input_l,
             "input_w": input_w,
             "input_c": input_c,
+            "nan_break": nan_break,
         }
 
         super().__init__(self.CFG, name=self.CFG["name"])
