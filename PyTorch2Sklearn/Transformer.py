@@ -99,7 +99,7 @@ class Transformer(TorchToSklearn_Model):
 
             mlp_layers = []
 
-            if CFG["use_cls"]:
+            if CFG["agg_transformer_output"] in ['cls', 'mean']:
                 input_dim = CFG["hidden_dim"]
             else:
                 input_dim = CFG["input_dim"] * CFG["hidden_dim"]
@@ -135,6 +135,9 @@ class Transformer(TorchToSklearn_Model):
             super().__init__()
             self.CFG = CFG
 
+            assert self.CFG['agg_transformer_output'] in [
+                'cls', 'concat', 'mean'], "agg_transformer_output must be one of ['cls', 'mean', 'concat']"
+
             # run warnings
             self._warning()
 
@@ -163,7 +166,7 @@ class Transformer(TorchToSklearn_Model):
             # Forward pass through MLP layer for each feature
             mlp_output = self.mlp_per_feature(X)
 
-            if self.CFG["use_cls"]:
+            if self.CFG["agg_transformer_output"] == 'cls':
                 # Add an extra hidden_dim vector (cls) to the front of mlp_output
                 mlp_output = torch.cat(
                     [
@@ -176,8 +179,12 @@ class Transformer(TorchToSklearn_Model):
 
             transformer_output = self.transformer_block(mlp_output)
 
-            if self.CFG["use_cls"]:  # predict just using cls
+            if self.CFG["agg_transformer_output"] == 'cls':  # predict just using cls
                 y = self.out_mlp(transformer_output[:, 0, :])
+            elif self.CFG["agg_transformer_output"] == 'mean':  # mean of all layers
+                y = self.out_mlp(
+                    torch.mean(transformer_output, dim=1)
+                )
             else:  # concatenate the output from all layers in transformer_output
                 y = self.out_mlp(
                     torch.cat(
@@ -193,9 +200,9 @@ class Transformer(TorchToSklearn_Model):
 
         def _warning(self):
 
-            if self.CFG["use_cls"] and self.CFG["num_transformer_layers"] == 1:
+            if self.CFG["agg_transformer_output"] == 'cls' and self.CFG["num_transformer_layers"] == 1:
                 print(
-                    "Warning: Setting use_cls to True with num_transformer_layers=1 is not recommended."
+                    "Warning: Setting agg_transformer_output to True with num_transformer_layers=1 is not recommended."
                     "The model will only be able to predict using the first feature token and will likely result in no learning/0R model"
                 )
 
@@ -214,8 +221,8 @@ class Transformer(TorchToSklearn_Model):
         loss,
         TabularDataFactory,
         TabularDataset,
+        agg_transformer_output: str,
         share_embedding_mlp: bool = False,
-        use_cls: bool = False,
         dim_feedforward: int = None,
         lr: float = 1e-3,
         random_state: int = 42,
@@ -238,7 +245,7 @@ class Transformer(TorchToSklearn_Model):
             "hidden_dim": hidden_dim,
             "dim_feedforward": dim_feedforward,
             "nhead": nhead,
-            "use_cls": use_cls,
+            "agg_transformer_output": agg_transformer_output,
             "dropout": dropout,
             "mode": mode,
             "batch_size": batch_size,

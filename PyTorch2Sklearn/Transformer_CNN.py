@@ -99,7 +99,7 @@ class Transformer_CNN(TorchToSklearn_ImageTabularModel):
 
             mlp_layers = []
 
-            if CFG["use_cls"]:
+            if CFG["agg_transformer_output"] in ['cls', 'mean']:
                 input_dim = CFG["hidden_dim"] * (2 if CFG['cnn_concat']
                                                  else 1)
             else:
@@ -140,6 +140,9 @@ class Transformer_CNN(TorchToSklearn_ImageTabularModel):
 
             assert not (self.CFG['freeze_encoder'] and not self.CFG['pretrained']
                         ), "If encoder is frozen, it must be pretrained"
+
+            assert self.CFG['agg_transformer_output'] in [
+                'cls', 'mean', 'concat'], "agg_transformer_output must be one of ['cls', 'mean', 'concat']"
 
             self.CNN_encoder = torch.hub.load('pytorch/vision:v0.10.0', self.CFG['cnn_encoder'], pretrained=self.CFG['pretrained']) if type(
                 self.CFG['cnn_encoder']) == str else self.CFG['cnn_encoder']
@@ -246,7 +249,7 @@ class Transformer_CNN(TorchToSklearn_ImageTabularModel):
             # Forward pass through MLP layer for each feature
             mlp_output = self.mlp_per_feature(X)
 
-            if self.CFG["use_cls"]:
+            if self.CFG["agg_transformer_output"] == 'cls':
                 # Add an extra hidden_dim vector (cls) to the front of mlp_output
                 mlp_output = torch.cat(
                     [
@@ -265,9 +268,14 @@ class Transformer_CNN(TorchToSklearn_ImageTabularModel):
 
             transformer_output = self.transformer_block(mlp_output)
 
-            if self.CFG["use_cls"]:  # predict just using cls
+            if self.CFG["agg_transformer_output"] == 'cls':  # predict just using cls
                 y = self.out_mlp(torch.cat(
                     [transformer_output[:, 0, :], X_img], dim=1) if self.CFG['cnn_concat'] else transformer_output[:, 0, :])
+            elif self.CFG["agg_transformer_output"] == 'mean':  # mean of all layers
+                y = self.out_mlp(
+                    torch.mean(transformer_output, dim=1) if not self.CFG['cnn_concat'] else torch.cat(
+                        [torch.mean(transformer_output, dim=1), X_img], dim=1)
+                )
             else:  # concatenate the output from all layers in transformer_output
 
                 y = self.out_mlp(
@@ -287,9 +295,9 @@ class Transformer_CNN(TorchToSklearn_ImageTabularModel):
 
         def _warning(self):
 
-            if self.CFG["use_cls"] and self.CFG["num_transformer_layers"] == 1:
+            if self.CFG["agg_transformer_output"] == 'cls' and self.CFG["num_transformer_layers"] == 1:
                 print(
-                    "Warning: Setting use_cls to True with num_transformer_layers=1 is not recommended."
+                    "Warning: Setting agg_transformer_output to True with num_transformer_layers=1 is not recommended."
                     "The model will only be able to predict using the first feature token and will likely result in no learning/0R model"
                 )
 
@@ -312,8 +320,8 @@ class Transformer_CNN(TorchToSklearn_ImageTabularModel):
         freeze_encoder: bool,
         pretrained: bool,
         crop_pretrained_linear: bool,
+        agg_transformer_output: str,
         share_embedding_mlp: bool = False,
-        use_cls: bool = False,
         cnn_concat: bool = False,
         dim_feedforward: int = None,
         lr: float = 1e-3,
@@ -345,7 +353,7 @@ class Transformer_CNN(TorchToSklearn_ImageTabularModel):
             "pretrained": pretrained,
             "crop_pretrained_linear": crop_pretrained_linear,
             "nhead": nhead,
-            "use_cls": use_cls,
+            "agg_transformer_output": agg_transformer_output,
             "dropout": dropout,
             "mode": mode,
             "batch_size": batch_size,
