@@ -150,7 +150,7 @@ class TorchToSklearn_Model(object):
                 if nan_loss_count > 0:
                     print(
                         f"Epoch {epoch}: {nan_loss_count} NaN losses encountered.")
-                if nan_loss_count/len(tabular_dataloader) > 0.1 & self.CFG['nan_break']:
+                if (nan_loss_count/len(tabular_dataloader) > 0.1) & self.CFG['nan_break']:
                     print(
                         "Terminating Training: More than 10% of batches had NaN loss.")
                     break
@@ -194,7 +194,7 @@ class TorchToSklearn_Model(object):
                 if nan_loss_count > 0:
                     print(
                         f"Epoch {epoch}: {nan_loss_count} NaN losses encountered.")
-                if nan_loss_count/len(tabular_dataloader) > 0.1 & self.CFG['nan_break']:
+                if (nan_loss_count/len(tabular_dataloader) > 0.1) & self.CFG['nan_break']:
                     print(
                         "Terminating Training: More than 10% of batches had NaN loss.")
                     break
@@ -458,7 +458,7 @@ class TorchToSklearn_GraphModel(object):
                 if nan_loss_count > 0:
                     print(
                         f"Epoch {epoch}: {nan_loss_count} NaN losses encountered.")
-                if nan_loss_count/len(x_list) > 0.1 & self.CFG['nan_break']:
+                if (nan_loss_count/len(x_list) > 0.1) & self.CFG['nan_break']:
                     print(
                         "Terminating Training: More than 10% of batches had NaN loss.")
                     break
@@ -511,7 +511,7 @@ class TorchToSklearn_GraphModel(object):
                 if nan_loss_count > 0:
                     print(
                         f"Epoch {epoch}: {nan_loss_count} NaN losses encountered.")
-                if nan_loss_count/len(x_list) > 0.1 & self.CFG['nan_break']:
+                if (nan_loss_count/len(x_list) > 0.1) & self.CFG['nan_break']:
                     print(
                         "Terminating Training: More than 10% of batches had NaN loss.")
                     break
@@ -793,7 +793,7 @@ class TorchToSklearn_ImageGraphModel(object):
                 if nan_loss_count > 0:
                     print(
                         f"Epoch {epoch}: {nan_loss_count} NaN losses encountered.")
-                if nan_loss_count/len(x_list) > 0.1 & self.CFG['nan_break']:
+                if (nan_loss_count/len(x_list) > 0.1) & self.CFG['nan_break']:
                     print(
                         "Terminating Training: More than 10% of batches had NaN loss.")
                     break
@@ -852,7 +852,7 @@ class TorchToSklearn_ImageGraphModel(object):
                 if nan_loss_count > 0:
                     print(
                         f"Epoch {epoch}: {nan_loss_count} NaN losses encountered.")
-                if nan_loss_count/len(x_list) > 0.1 & self.CFG['nan_break']:
+                if (nan_loss_count/len(x_list) > 0.1) & self.CFG['nan_break']:
                     print(
                         "Terminating Training: More than 10% of batches had NaN loss.")
                     break
@@ -1116,7 +1116,7 @@ class TorchToSklearn_ImageTabularModel(object):
                 if nan_loss_count > 0:
                     print(
                         f"Epoch {epoch}: {nan_loss_count} NaN losses encountered.")
-                if nan_loss_count/len(tabularimage_dataloader) > 0.1 & self.CFG['nan_break']:
+                if (nan_loss_count/len(tabularimage_dataloader) > 0.1) & self.CFG['nan_break']:
                     print(
                         "Terminating Training: More than 10% of batches had NaN loss.")
                     break
@@ -1162,7 +1162,7 @@ class TorchToSklearn_ImageTabularModel(object):
                 if nan_loss_count > 0:
                     print(
                         f"Epoch {epoch}: {nan_loss_count} NaN losses encountered.")
-                if nan_loss_count/len(tabularimage_dataloader) > 0.1 & self.CFG['nan_break']:
+                if (nan_loss_count/len(tabularimage_dataloader) > 0.1) & self.CFG['nan_break']:
                     print(
                         "Terminating Training: More than 10% of batches had NaN loss.")
                     break
