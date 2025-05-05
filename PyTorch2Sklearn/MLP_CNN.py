@@ -159,8 +159,6 @@ class MLP_CNN(TorchToSklearn_ImageTabularModel):
 
         def forward(self, X, X_img):
 
-            y = self.full_model(X)
-
             X_img = self.CNN_encoder(X_img)
 
             batch_size = X_img.size(0)
