@@ -287,14 +287,14 @@ class Transformer_CNN_AGNN(TorchToSklearn_ImageGraphModel):
             )
 
             # Graph layers
-            if self.CFG["graph_nhead"] == 0:
+            if self.CFG["nhead"] == 0:
                 self.graph_layer = nn.ModuleList(
                     [GCN(CFG) for _ in range(CFG["num_graph_layers"])]
                 )
             else:
                 self.graph_layer = nn.ModuleList(
                     [
-                        A_GCN(CFG, CFG["graph_nhead"])
+                        A_GCN(CFG, CFG["nhead"])
                         for _ in range(CFG["num_graph_layers"])
                     ]
                 )
@@ -393,7 +393,6 @@ class Transformer_CNN_AGNN(TorchToSklearn_ImageGraphModel):
         hidden_dim: int,
         dropout: float,
         nhead: int,
-        graph_nhead: int,
         mode: str,
         epochs: int,
         loss,
@@ -438,7 +437,6 @@ class Transformer_CNN_AGNN(TorchToSklearn_ImageGraphModel):
             "pretrained": pretrained,
             "crop_pretrained_linear": crop_pretrained_linear,
             "nhead": nhead,
-            "graph_nhead": graph_nhead,
             "agg_transformer_output": agg_transformer_output,
             "dropout": dropout,
             "mode": mode,
