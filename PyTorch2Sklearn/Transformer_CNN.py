@@ -330,7 +330,7 @@ class Transformer_CNN(TorchToSklearn_ImageTabularModel):
         batchnorm: bool = False,
         verbose: bool = False,
         rootpath: str = "./",
-        name: str = "Transformer",
+        name: str = "Transformer_CNN",
         input_l: int = 3,
         input_w: int = 224,
         input_c: int = 224,
