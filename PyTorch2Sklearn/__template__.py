@@ -136,11 +136,11 @@ class TorchToSklearn_Model(object):
                     self.optimizer.zero_grad()
                     pred = self.model(X)
 
-                    loss = self.criterion(pred, y)
+                    if torch.isnan(pred).any():
 
-                    if torch.isnan(loss):
                         nan_loss_count += 1
                     else:
+                        loss = self.criterion(pred, y)
                         loss.backward()
                         if self.CFG["grad_clip"]:
                             nn.utils.clip_grad_norm_(
@@ -180,11 +180,10 @@ class TorchToSklearn_Model(object):
                     self.optimizer.zero_grad()
                     pred = self.model(X)
 
-                    loss = self.criterion(pred, y)
-
-                    if torch.isnan(loss):
+                    if torch.isnan(pred).any():
                         nan_loss_count += 1
                     else:
+                        loss = self.criterion(pred, y)
                         loss.backward()
                         if self.CFG["grad_clip"]:
                             nn.utils.clip_grad_norm_(
@@ -444,11 +443,11 @@ class TorchToSklearn_GraphModel(object):
                         else self.CFG["graph"].to(self.device)
                     )
                     pred = self.model(X, graph)
-                    loss = self.criterion(pred.squeeze(0), y)
 
-                    if torch.isnan(loss):
+                    if torch.isnan(pred).any():
                         nan_loss_count += 1
                     else:
+                        loss = self.criterion(pred, y)
                         loss.backward()
                         if self.CFG["grad_clip"]:
                             nn.utils.clip_grad_norm_(
@@ -497,11 +496,12 @@ class TorchToSklearn_GraphModel(object):
                     )
                     pred = self.model(X, graph)
 
-                    loss = self.criterion(pred, y)
-
-                    if torch.isnan(loss):
+                    if torch.isnan(pred).any():
                         nan_loss_count += 1
                     else:
+
+                        loss = self.criterion(pred, y)
+
                         loss.backward()
                         if self.CFG["grad_clip"]:
                             nn.utils.clip_grad_norm_(
@@ -779,11 +779,12 @@ class TorchToSklearn_ImageGraphModel(object):
                         else self.CFG["graph"].to(self.device)
                     )
                     pred = self.model(X, X_images, graph)
-                    loss = self.criterion(pred.squeeze(0), y)
 
-                    if torch.isnan(loss):
+                    if torch.isnan(pred).any():
                         nan_loss_count += 1
                     else:
+                        loss = self.criterion(pred.squeeze(0), y)
+
                         loss.backward()
                         if self.CFG["grad_clip"]:
                             nn.utils.clip_grad_norm_(
@@ -838,11 +839,10 @@ class TorchToSklearn_ImageGraphModel(object):
                     )
                     pred = self.model(X, X_images, graph)
 
-                    loss = self.criterion(pred, y)
-
-                    if torch.isnan(loss):
+                    if torch.isnan(pred).any():
                         nan_loss_count += 1
                     else:
+                        loss = self.criterion(pred, y)
                         loss.backward()
                         if self.CFG["grad_clip"]:
                             nn.utils.clip_grad_norm_(
@@ -859,7 +859,7 @@ class TorchToSklearn_ImageGraphModel(object):
 
         self._is_fitted = True
 
-    def predict(self, val_x: pd.DataFrame, val_x_images: dict) -> list:
+    def predict(self, val_x: pd.DataFrame) -> list:
         """Predict labels for classification tasks and values for regression tasks.
 
         Input:
@@ -879,27 +879,27 @@ class TorchToSklearn_ImageGraphModel(object):
         with torch.no_grad():
 
             x_list, x_images_list = self.CFG["ImageGraphDataFactory"](
-                val_x, val_x_images, mode=self.CFG["mode"], CFG=self.CFG
+                val_x, mode=self.CFG["mode"], CFG=self.CFG
             )  # create the instances
 
             valid_pred = []
 
             for mini_batch_number in range(len(x_list)):
-                x_batch, x_images_batch = torch.FloatTensor(x_list[mini_batch_number]).to(self.device).squeeze(0), \
-                    torch.FloatTensor(
-                        x_images_list[mini_batch_number].astype(
-                            'float32') / 255.0
-                ).to(self.device).squeeze(0)
+                X, X_images = torch.FloatTensor(np.array(x_list[mini_batch_number])).to(
+                    self.device
+                ).squeeze(0), torch.FloatTensor(np.array(x_images_list[mini_batch_number], dtype=np.float32) / 255.0).to(
+                    self.device
+                ).squeeze(0)
 
                 graph = (
-                        (torch.ones(len(x_batch)).unsqueeze(0).T @
-                         torch.ones(len(x_batch)).unsqueeze(0)).to(self.device)
+                        (torch.ones(len(X)).unsqueeze(0).T @
+                         torch.ones(len(X)).unsqueeze(0)).to(self.device)
                     if self.CFG["graph"] == "J"
-                    else (1/len(x_batch) * torch.ones(len(x_batch)).unsqueeze(0).T @ torch.ones(len(x_batch)).unsqueeze(0)).to(self.device) if self.CFG["graph"] == "U"
+                    else (1/len(X) * torch.ones(len(X)).unsqueeze(0).T @ torch.ones(len(X)).unsqueeze(0)).to(self.device) if self.CFG["graph"] == "U"
                     else self.CFG["graph"].to(self.device)
                 )
 
-                pred = self.model(x_batch, x_images_batch, graph)
+                pred = self.model(X, X_images, graph)
                 # if regression, squeeze the dimension, if classification, argmax.
                 predicted_labels = (
                     torch.argmax(pred, dim=1)
@@ -913,7 +913,7 @@ class TorchToSklearn_ImageGraphModel(object):
 
         return np.array(valid_pred)
 
-    def predict_proba(self, val_x: pd.DataFrame, val_x_images: dict) -> np.ndarray:
+    def predict_proba(self, val_x: pd.DataFrame) -> np.ndarray:
         """Predict probabilities for classification tasks.
 
         Input:
@@ -934,25 +934,28 @@ class TorchToSklearn_ImageGraphModel(object):
 
         with torch.no_grad():
             x_list, x_images_list = self.CFG["ImageGraphDataFactory"](
-                val_x, val_x_images, mode=self.CFG["mode"], CFG=self.CFG
-            )
+                val_x, mode=self.CFG["mode"], CFG=self.CFG
+            )  # create the instances
 
             valid_pred_probs = []
 
             for mini_batch_number in range(len(x_list)):
-                x_batch, x_images_batch = torch.FloatTensor(
-                    x_list[mini_batch_number]).to(self.device).squeeze(0), torch.FloatTensor(x_images_list[mini_batch_number].astype('float32')/255.0).to(self.device).squeeze(0)
+                X, X_images = torch.FloatTensor(np.array(x_list[mini_batch_number])).to(
+                    self.device
+                ).squeeze(0), torch.FloatTensor(np.array(x_images_list[mini_batch_number], dtype=np.float32) / 255.0).to(
+                    self.device
+                ).squeeze(0)
 
                 graph = (
-                    (torch.ones(len(x_batch)).unsqueeze(0).T @
-                        torch.ones(len(x_batch)).unsqueeze(0)).to(self.device)
+                    (torch.ones(len(X)).unsqueeze(0).T @
+                        torch.ones(len(X)).unsqueeze(0)).to(self.device)
                     if self.CFG["graph"] == "J"
-                    else (1/len(x_batch) * torch.ones(len(x_batch)).unsqueeze(0).T @ torch.ones(len(x_batch)).unsqueeze(0)).to(self.device) if self.CFG["graph"] == "U"
+                    else (1/len(X) * torch.ones(len(X)).unsqueeze(0).T @ torch.ones(len(X)).unsqueeze(0)).to(self.device) if self.CFG["graph"] == "U"
                     else self.CFG["graph"].to(self.device)
                 )
 
                 pred_probs = self.model(
-                    x_batch, x_images_batch, graph).softmax(dim=1)
+                    X, X_images, graph).softmax(dim=1)
                 valid_pred_probs.append(pred_probs.detach().cpu().numpy())
 
             valid_pred_probs = np.concatenate(valid_pred_probs, axis=0)
@@ -1102,11 +1105,10 @@ class TorchToSklearn_ImageTabularModel(object):
                     self.optimizer.zero_grad()
 
                     pred = self.model(X, X_images)
-
-                    loss = self.criterion(pred.squeeze(0), y)
-                    if torch.isnan(loss):
+                    if torch.isnan(pred).any():
                         nan_loss_count += 1
                     else:
+                        loss = self.criterion(pred.squeeze(0), y)
                         loss.backward()
                         if self.CFG["grad_clip"]:
                             nn.utils.clip_grad_norm_(
@@ -1148,11 +1150,10 @@ class TorchToSklearn_ImageTabularModel(object):
 
                     pred = self.model(X, X_images)
 
-                    loss = self.criterion(pred, y)
-
-                    if torch.isnan(loss):
+                    if torch.isnan(pred).any():
                         nan_loss_count += 1
                     else:
+                        loss = self.criterion(pred, y)
                         loss.backward()
                         if self.CFG["grad_clip"]:
                             nn.utils.clip_grad_norm_(
