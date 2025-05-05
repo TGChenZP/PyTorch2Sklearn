@@ -2,7 +2,7 @@ from PyTorch2Sklearn.__template__ import TorchToSklearn_ImageTabularModel
 from PyTorch2Sklearn.Modules import *
 
 
-class MLP(TorchToSklearn_ImageTabularModel):
+class MLP_CNN(TorchToSklearn_ImageTabularModel):
     """MLP Classifier or Regressor that can be used as a sklearn model"""
 
     class Model(nn.Module):
