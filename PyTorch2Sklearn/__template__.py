@@ -121,8 +121,6 @@ class TorchToSklearn_Model(object):
                     generator=torch.Generator().manual_seed(seeds[epoch]),
                 )
 
-                nan_loss_count = 0
-
                 for batch in tabular_dataloader:
                     X, y = batch[0].to(self.device), batch[1].to(self.device)
 
@@ -138,7 +136,8 @@ class TorchToSklearn_Model(object):
 
                     if torch.isnan(pred).any():
 
-                        nan_loss_count += 1
+                        print(f"Epoch {epoch}: NaN losses encountered.")
+                        break
                     else:
                         loss = self.criterion(pred, y)
                         loss.backward()
@@ -147,12 +146,9 @@ class TorchToSklearn_Model(object):
                                 self.model.parameters(), 2.0)
                         self.optimizer.step()
 
-                if nan_loss_count > 0:
+                if self.CFG['nan_break']:
                     print(
-                        f"Epoch {epoch}: {nan_loss_count} NaN losses encountered.")
-                if (nan_loss_count/len(tabular_dataloader) > 0.1) & self.CFG['nan_break']:
-                    print(
-                        "Terminating Training: More than 10% of batches had NaN loss.")
+                        "Terminating Training: NaN loss.")
                     break
 
         else:
@@ -165,8 +161,6 @@ class TorchToSklearn_Model(object):
                     generator=torch.Generator().manual_seed(seeds[epoch]),
                 )
 
-                nan_loss_count = 0
-
                 for batch in tabular_dataloader:
                     X, y = batch[0].to(self.device), batch[1].to(self.device)
 
@@ -181,7 +175,8 @@ class TorchToSklearn_Model(object):
                     pred = self.model(X)
 
                     if torch.isnan(pred).any():
-                        nan_loss_count += 1
+                        print(f"Epoch {epoch}: NaN losses encountered.")
+                        break
                     else:
                         loss = self.criterion(pred, y)
                         loss.backward()
@@ -190,12 +185,9 @@ class TorchToSklearn_Model(object):
                                 self.model.parameters(), 2.0)
                         self.optimizer.step()
 
-                if nan_loss_count > 0:
+                if self.CFG['nan_break']:
                     print(
-                        f"Epoch {epoch}: {nan_loss_count} NaN losses encountered.")
-                if (nan_loss_count/len(tabular_dataloader) > 0.1) & self.CFG['nan_break']:
-                    print(
-                        "Terminating Training: More than 10% of batches had NaN loss.")
+                        "Terminating Training: NaN loss.")
                     break
 
         self._is_fitted = True
@@ -425,8 +417,6 @@ class TorchToSklearn_GraphModel(object):
                         0
                     )
 
-                    nan_loss_count = 0
-
                     # special case error handling: batchnorm needs more than 2 instances to be meaningful
                     if self.CFG["batchnorm"] == True and X.shape[0] <= 2:
                         continue
@@ -445,7 +435,8 @@ class TorchToSklearn_GraphModel(object):
                     pred = self.model(X, graph)
 
                     if torch.isnan(pred).any():
-                        nan_loss_count += 1
+                        print(f"Epoch {epoch}: NaN losses encountered.")
+                        break
                     else:
                         loss = self.criterion(pred, y)
                         loss.backward()
@@ -454,12 +445,9 @@ class TorchToSklearn_GraphModel(object):
                                 self.model.parameters(), 2.0)
                         self.optimizer.step()
 
-                if nan_loss_count > 0:
+                if self.CFG['nan_break']:
                     print(
-                        f"Epoch {epoch}: {nan_loss_count} NaN losses encountered.")
-                if (nan_loss_count/len(x_list) > 0.1) & self.CFG['nan_break']:
-                    print(
-                        "Terminating Training: More than 10% of batches had NaN loss.")
+                        "Terminating Training: NaN loss.")
                     break
         else:
             for epoch in range(self.CFG["epochs"]):
@@ -470,8 +458,6 @@ class TorchToSklearn_GraphModel(object):
                     seeds[epoch]
                 )  # reset seed so that they are shuffled in same order
                 np.random.shuffle(y_list)
-
-                nan_loss_count = 0
 
                 for mini_batch_number in range(len(x_list)):
                     X, y = torch.FloatTensor(x_list[mini_batch_number]).to(
@@ -497,7 +483,8 @@ class TorchToSklearn_GraphModel(object):
                     pred = self.model(X, graph)
 
                     if torch.isnan(pred).any():
-                        nan_loss_count += 1
+                        print(f"Epoch {epoch}: NaN losses encountered.")
+                        break
                     else:
 
                         loss = self.criterion(pred, y)
@@ -508,12 +495,9 @@ class TorchToSklearn_GraphModel(object):
                                 self.model.parameters(), 2.0)
                         self.optimizer.step()
 
-                if nan_loss_count > 0:
+                if self.CFG['nan_break']:
                     print(
-                        f"Epoch {epoch}: {nan_loss_count} NaN losses encountered.")
-                if (nan_loss_count/len(x_list) > 0.1) & self.CFG['nan_break']:
-                    print(
-                        "Terminating Training: More than 10% of batches had NaN loss.")
+                        "Terminating Training: NaN loss.")
                     break
 
         self._is_fitted = True
@@ -748,8 +732,6 @@ class TorchToSklearn_ImageGraphModel(object):
                 )  # reset seed so that they are shuffled in same order
                 np.random.shuffle(y_list)
 
-                nan_loss_count = 0
-
                 for mini_batch_number in range(len(x_list)):
                     X, X_images, y = torch.FloatTensor(np.array(x_list[mini_batch_number])).to(
                         self.device
@@ -781,7 +763,8 @@ class TorchToSklearn_ImageGraphModel(object):
                     pred = self.model(X, X_images, graph)
 
                     if torch.isnan(pred).any():
-                        nan_loss_count += 1
+                        print(f"Epoch {epoch}: NaN losses encountered.")
+                        break
                     else:
                         loss = self.criterion(pred.squeeze(0), y)
 
@@ -791,12 +774,9 @@ class TorchToSklearn_ImageGraphModel(object):
                                 self.model.parameters(), 2.0)
                         self.optimizer.step()
 
-                if nan_loss_count > 0:
+                if self.CFG['nan_break']:
                     print(
-                        f"Epoch {epoch}: {nan_loss_count} NaN losses encountered.")
-                if (nan_loss_count/len(x_list) > 0.1) & self.CFG['nan_break']:
-                    print(
-                        "Terminating Training: More than 10% of batches had NaN loss.")
+                        "Terminating Training: NaN loss.")
                     break
 
         else:
@@ -810,8 +790,6 @@ class TorchToSklearn_ImageGraphModel(object):
                     seeds[epoch]
                 )  # reset seed so that they are shuffled in same order
                 np.random.shuffle(y_list)
-
-                nan_loss_count = 0
 
                 for mini_batch_number in range(len(x_list)):
                     X, X_images, y = torch.FloatTensor(x_list[mini_batch_number]).to(
@@ -840,7 +818,8 @@ class TorchToSklearn_ImageGraphModel(object):
                     pred = self.model(X, X_images, graph)
 
                     if torch.isnan(pred).any():
-                        nan_loss_count += 1
+                        print(f"Epoch {epoch}: NaN losses encountered.")
+                        break
                     else:
                         loss = self.criterion(pred, y)
                         loss.backward()
@@ -849,12 +828,9 @@ class TorchToSklearn_ImageGraphModel(object):
                                 self.model.parameters(), 2.0)
                         self.optimizer.step()
 
-                if nan_loss_count > 0:
+                if self.CFG['nan_break']:
                     print(
-                        f"Epoch {epoch}: {nan_loss_count} NaN losses encountered.")
-                if (nan_loss_count/len(x_list) > 0.1) & self.CFG['nan_break']:
-                    print(
-                        "Terminating Training: More than 10% of batches had NaN loss.")
+                        "Terminating Training: NaN loss.")
                     break
 
         self._is_fitted = True
@@ -1089,8 +1065,6 @@ class TorchToSklearn_ImageTabularModel(object):
                     generator=torch.Generator().manual_seed(seeds[epoch]),
                 )
 
-                nan_loss_count = 0
-
                 for batch in tabularimage_dataloader:
                     X, X_images, y = batch[0].to(self.device), batch[1].to(
                         self.device), batch[2].to(self.device)
@@ -1106,7 +1080,8 @@ class TorchToSklearn_ImageTabularModel(object):
 
                     pred = self.model(X, X_images)
                     if torch.isnan(pred).any():
-                        nan_loss_count += 1
+                        print(f"Epoch {epoch}: NaN losses encountered.")
+                        break
                     else:
                         loss = self.criterion(pred.squeeze(0), y)
                         loss.backward()
@@ -1115,12 +1090,9 @@ class TorchToSklearn_ImageTabularModel(object):
                                 self.model.parameters(), 2.0)
                         self.optimizer.step()
 
-                if nan_loss_count > 0:
+                if self.CFG['nan_break']:
                     print(
-                        f"Epoch {epoch}: {nan_loss_count} NaN losses encountered.")
-                if (nan_loss_count/len(tabularimage_dataloader) > 0.1) & self.CFG['nan_break']:
-                    print(
-                        "Terminating Training: More than 10% of batches had NaN loss.")
+                        "Terminating Training: NaN loss.")
                     break
 
         else:
@@ -1133,8 +1105,6 @@ class TorchToSklearn_ImageTabularModel(object):
                     generator=torch.Generator().manual_seed(seeds[epoch]),
                 )
 
-                nan_loss_count = 0
-
                 for batch in tabularimage_dataloader:
                     X, X_images, y = batch[0].to(self.device), batch[1].to(
                         self.device), batch[2].to(self.device)
@@ -1151,7 +1121,8 @@ class TorchToSklearn_ImageTabularModel(object):
                     pred = self.model(X, X_images)
 
                     if torch.isnan(pred).any():
-                        nan_loss_count += 1
+                        print(f"Epoch {epoch}: NaN losses encountered.")
+                        break
                     else:
                         loss = self.criterion(pred, y)
                         loss.backward()
@@ -1160,12 +1131,9 @@ class TorchToSklearn_ImageTabularModel(object):
                                 self.model.parameters(), 2.0)
                         self.optimizer.step()
 
-                if nan_loss_count > 0:
+                if self.CFG['nan_break']:
                     print(
-                        f"Epoch {epoch}: {nan_loss_count} NaN losses encountered.")
-                if (nan_loss_count/len(tabularimage_dataloader) > 0.1) & self.CFG['nan_break']:
-                    print(
-                        "Terminating Training: More than 10% of batches had NaN loss.")
+                        "Terminating Training: NaN loss.")
                     break
 
         self._is_fitted = True
