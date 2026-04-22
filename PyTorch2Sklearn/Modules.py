@@ -111,16 +111,18 @@ class A_GCN(nn.Module):
             Q_tmp = Q[:, j * self.dim_per_head: (j + 1) * self.dim_per_head]
             K_tmp = K[:, j * self.dim_per_head: (j + 1) * self.dim_per_head]
             V_tmp = V[:, j * self.dim_per_head: (j + 1) * self.dim_per_head]
-            attention_out_tmp = (
-                self.dropout(
-                    self.softmax(
-                        (Q_tmp @ torch.transpose(K_tmp, 0, 1))
-                        * graph
-                        / np.sqrt(self.dim_per_head),
-                    )
-                )
-                @ V_tmp
+            scores = (
+                Q_tmp @ torch.transpose(K_tmp, 0, 1)
+            ) / np.sqrt(self.dim_per_head)
+            # Mask before softmax: multiply-by-zero leaves exp(0)=1 in the denominator.
+            scores = torch.where(
+                graph > 0,
+                scores * graph,
+                torch.full_like(scores, float("-inf")),
             )
+            attn = self.softmax(scores)
+            attn = torch.nan_to_num(attn, nan=0.0)
+            attention_out_tmp = self.dropout(attn) @ V_tmp
 
             attention_out_list.append(attention_out_tmp)
 
