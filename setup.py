@@ -1,8 +1,8 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="PyTorch2Sklearn",  # Replace with your package name
-    version="0.3.16",
+    name="pytorch2sklearn",  # Replace with your package name
+    version="0.3.17",
     author="Lang Chen",
     author_email="ronchen6666@gmail.com",
     description="Refactoring PyTorch models into sklearn-like API",
